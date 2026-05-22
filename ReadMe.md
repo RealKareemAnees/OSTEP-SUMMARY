@@ -10,13 +10,664 @@ by **Real Kareem Anees**;
 
 THIS GUIDE IS MEANT FOR SYUDENTS WHO HAD SUCCESSFULY READ THE BOOK AND NEED A REFRESHER
 
+- [Operating Systms Three Easy Pieces summary](#operating-systms-three-easy-pieces-summary)
+- [Operating Systems: Fundamentals & Process Management](#operating-systems-fundamentals-process-management)
+  - [Chapter 3: Introduction to Operating Systems & The Von Neumann Model](#chapter-3-introduction-to-operating-systems-the-von-neumann-model)
+    - [The Foundational Computer Architecture](#the-foundational-computer-architecture)
+      - [The Fetch-Decode-Execute Cycle](#the-fetch-decode-execute-cycle)
+    - [The Operating System as Resource Virtualization Layer](#the-operating-system-as-resource-virtualization-layer)
+      - [The Three Core Virtualization Domains](#the-three-core-virtualization-domains)
+    - [System Calls: The Process-OS Interface](#system-calls-the-process-os-interface)
+    - [The Mechanism vs. Policy Design Pattern](#the-mechanism-vs-policy-design-pattern)
+  - [Chapter 4: The Abstraction—The Process](#chapter-4-the-abstractionthe-process)
+    - [What is a Process?](#what-is-a-process)
+    - [Process Creation: From Program to Running Process](#process-creation-from-program-to-running-process)
+      - [Step 1: Load Code and Static Data](#step-1-load-code-and-static-data)
+      - [Step 2: Allocate and Initialize Runtime Memory Structures](#step-2-allocate-and-initialize-runtime-memory-structures)
+      - [Step 3: Initialize I/O File Descriptors](#step-3-initialize-io-file-descriptors)
+      - [Step 4: Start Program Execution](#step-4-start-program-execution)
+    - [The Process API](#the-process-api)
+      - [Create](#create)
+      - [Destroy](#destroy)
+      - [Wait](#wait)
+      - [Miscellaneous Control](#miscellaneous-control)
+      - [Status](#status)
+    - [Process States and State Transitions](#process-states-and-state-transitions)
+      - [Running](#running)
+      - [Ready](#ready)
+      - [Blocked](#blocked)
+      - [Extended States (in some operating systems)](#extended-states-in-some-operating-systems)
+    - [Process State Transition Diagram](#process-state-transition-diagram)
+    - [Scenario: Process Execution with CPU-Only Workload](#scenario-process-execution-with-cpu-only-workload)
+    - [Scenario: Process Execution with I/O Blocking](#scenario-process-execution-with-io-blocking)
+    - [Process Data Structures: The Kernel Process Table](#process-data-structures-the-kernel-process-table)
+      - [xv6 Kernel Process Structure](#xv6-kernel-process-structure)
+  - [Chapter 5: The Process API in Historical Context](#chapter-5-the-process-api-in-historical-context)
+    - [The Era of Multiprogramming](#the-era-of-multiprogramming)
+      - [The Core Problem](#the-core-problem)
+      - [The Multiprogramming Solution](#the-multiprogramming-solution)
+    - [Key OS Innovations Required for Multiprogramming](#key-os-innovations-required-for-multiprogramming)
+      - [Memory Protection](#memory-protection)
+      - [Interrupt and Exception Handling](#interrupt-and-exception-handling)
+      - [Concurrent Access Control](#concurrent-access-control)
+    - [The UNIX Philosophy](#the-unix-philosophy)
+  - [Chapter 6: Mechanisms—Limited Direct Execution](#chapter-6-mechanismslimited-direct-execution)
+    - [The Core Challenge: Running User Programs Safely and Efficiently](#the-core-challenge-running-user-programs-safely-and-efficiently)
+    - [The Dual-Mode Execution Model](#the-dual-mode-execution-model)
+      - [User Mode](#user-mode)
+      - [Kernel Mode (Supervisor Mode)](#kernel-mode-supervisor-mode)
+    - [Transitioning Between Modes](#transitioning-between-modes)
+      - [User Mode → Kernel Mode: System Call](#user-mode-kernel-mode-system-call)
+      - [Kernel Mode → User Mode: Return from System Call](#kernel-mode-user-mode-return-from-system-call)
+    - [Context Switching: Saving and Restoring Process State](#context-switching-saving-and-restoring-process-state)
+    - [Processor Timer Interrupt: Enforcing Time Multiplexing](#processor-timer-interrupt-enforcing-time-multiplexing)
+    - [I/O Operations: Blocking and Non-Blocking](#io-operations-blocking-and-non-blocking)
+      - [Blocking I/O (Traditional Model)](#blocking-io-traditional-model)
+    - [CPU Virtualization Demonstration: Code Analysis](#cpu-virtualization-demonstration-code-analysis)
+      - [Example 1: Single-Process CPU Usage (cpu.c)](#example-1-single-process-cpu-usage-cpuc)
+      - [Example 2: Demonstrating CPU Virtualization with Multiple Processes](#example-2-demonstrating-cpu-virtualization-with-multiple-processes)
+      - [Example 3: Memory Virtualization Demonstration (mem.c)](#example-3-memory-virtualization-demonstration-memc)
+    - [Concurrency Introduction: The Race Condition Problem](#concurrency-introduction-the-race-condition-problem)
+      - [Multi-threaded Counter Increment Example (threads.c)](#multi-threaded-counter-increment-example-threadsc)
+  - [Key Takeaways](#key-takeaways) - [Operating System Fundamentals](#operating-system-fundamentals) - [The Process Abstraction](#the-process-abstraction) - [Limited Direct Execution](#limited-direct-execution) - [Concurrency Challenges](#concurrency-challenges)
+  - [Important Terms](#important-terms)
+- [Operating Systems: Process Scheduling and Virtualization Study Guide](#operating-systems-process-scheduling-and-virtualization-study-guide)
+  - [Chapter 1: Interlude - The Process API](#chapter-1-interlude-the-process-api)
+    - [Overview](#overview)
+    - [The fork() System Call](#the-fork-system-call)
+      - [Purpose and Mechanism](#purpose-and-mechanism)
+      - [Why fork() and exec() Are Separate](#why-fork-and-exec-are-separate)
+    - [The exec() Family of System Calls](#the-exec-family-of-system-calls)
+      - [Purpose and Mechanism](#purpose-and-mechanism-1)
+      - [Common exec() Variants](#common-exec-variants)
+    - [Practical Pattern: fork() + exec()](#practical-pattern-fork-exec)
+    - [Advanced Technique: Input/Output Redirection](#advanced-technique-inputoutput-redirection)
+    - [The wait() System Call](#the-wait-system-call)
+      - [Purpose and Mechanism](#purpose-and-mechanism-2)
+    - [Understanding Process IDs (PIDs)](#understanding-process-ids-pids)
+    - [Process States and Transitions](#process-states-and-transitions)
+    - [Process Control and Signals](#process-control-and-signals)
+      - [Key Takeaways](#key-takeaways-1)
+      - [Important Terms](#important-terms-1)
+  - [Chapter 2: Mechanism - Limited Direct Execution](#chapter-2-mechanism-limited-direct-execution)
+    - [Overview](#overview-1)
+    - [Hardware Privilege Levels](#hardware-privilege-levels)
+    - [The Limited Direct Execution Protocol](#the-limited-direct-execution-protocol)
+      - [Phase 1: Boot-Time Setup (Privileged)](#phase-1-boot-time-setup-privileged)
+      - [Phase 2: Runtime Execution (Limited Direct)](#phase-2-runtime-execution-limited-direct)
+    - [System Calls: Protected Transitions into the Kernel](#system-calls-protected-transitions-into-the-kernel)
+      - [The System Call Mechanism](#the-system-call-mechanism)
+      - [System Call Security](#system-call-security)
+    - [Managing Timer Interrupts: Regaining Control](#managing-timer-interrupts-regaining-control)
+      - [The Problem](#the-problem)
+      - [Solution: Timer Interrupts](#solution-timer-interrupts)
+    - [Context Switching](#context-switching)
+      - [Definition](#definition)
+      - [Context Switch Overhead](#context-switch-overhead)
+      - [Cooperative vs. Non-Cooperative Scheduling](#cooperative-vs-non-cooperative-scheduling)
+      - [Key Takeaways](#key-takeaways-2)
+      - [Important Terms](#important-terms-2)
+  - [Chapter 3: Scheduling - Introduction](#chapter-3-scheduling-introduction)
+    - [Overview](#overview-2)
+    - [Workload Assumptions](#workload-assumptions)
+    - [Scheduling Metrics](#scheduling-metrics)
+      - [Primary Metric: Turnaround Time](#primary-metric-turnaround-time)
+      - [Secondary Metric: Response Time](#secondary-metric-response-time)
+    - [First In, First Out (FIFO) Scheduling](#first-in-first-out-fifo-scheduling)
+      - [Algorithm Description](#algorithm-description)
+      - [FIFO Pseudocode](#fifo-pseudocode)
+      - [FIFO Performance Under Ideal Assumptions](#fifo-performance-under-ideal-assumptions)
+      - [FIFO Performance: Impact of Relaxing Assumption 1](#fifo-performance-impact-of-relaxing-assumption-1)
+    - [Shortest Job First (SJF) Scheduling](#shortest-job-first-sjf-scheduling)
+      - [Algorithm Description](#algorithm-description-1)
+      - [Why SJF Works](#why-sjf-works)
+      - [SJF Performance: Same Scenario](#sjf-performance-same-scenario)
+      - [SJF Limitation: Unknown Job Lengths](#sjf-limitation-unknown-job-lengths)
+    - [SJF with Late Arrivals](#sjf-with-late-arrivals)
+      - [New Assumption: Jobs Arrive at Different Times](#new-assumption-jobs-arrive-at-different-times)
+    - [Shortest Time-to-Completion First (STCF)](#shortest-time-to-completion-first-stcf)
+      - [Algorithm Description](#algorithm-description-2)
+      - [STCF vs. SJF](#stcf-vs-sjf)
+      - [STCF Performance: Same Late-Arrival Scenario](#stcf-performance-same-late-arrival-scenario)
+      - [Key Takeaways](#key-takeaways-3)
+      - [Important Terms](#important-terms-3)
+  - [Chapter 4: Scheduling - The Multi-Level Feedback Queue (MLFQ)](#chapter-4-scheduling-the-multi-level-feedback-queue-mlfq)
+    - [Overview](#overview-3)
+    - [The Fundamental Challenge](#the-fundamental-challenge)
+    - [MLFQ: Basic Rules](#mlfq-basic-rules)
+      - [Rule 1: Priority-Based Selection](#rule-1-priority-based-selection)
+      - [Rule 2: Round-Robin Among Equal Priorities](#rule-2-round-robin-among-equal-priorities)
+    - [How MLFQ Adjusts Priorities](#how-mlfq-adjusts-priorities)
+      - [Rule 3: New Jobs Enter at Highest Priority](#rule-3-new-jobs-enter-at-highest-priority)
+      - [Rule 4a: Using Full Time Slice → Lower Priority](#rule-4a-using-full-time-slice-lower-priority)
+      - [Rule 4b: Yield CPU Early → Keep Priority](#rule-4b-yield-cpu-early-keep-priority)
+      - [Example 1: Long-Running Batch Job](#example-1-long-running-batch-job)
+      - [Example 2: Short Interactive Job Arrives](#example-2-short-interactive-job-arrives)
+    - [Problems with Basic MLFQ](#problems-with-basic-mlfq)
+      - [Problem 1: Starvation](#problem-1-starvation)
+      - [Problem 2: Gaming the Scheduler](#problem-2-gaming-the-scheduler)
+      - [Problem 3: Behavior Changes](#problem-3-behavior-changes)
+    - [MLFQ: Improved Rule 1 - Priority Boost](#mlfq-improved-rule-1-priority-boost)
+      - [Rule 5: Periodic Priority Boost](#rule-5-periodic-priority-boost)
+      - [Problem: "Voodoo Constants"](#problem-voodoo-constants)
+    - [MLFQ: Improved Rule 2 - Better Accounting](#mlfq-improved-rule-2-better-accounting)
+      - [Rule 4 Revised: Track CPU Use in Each Priority Level](#rule-4-revised-track-cpu-use-in-each-priority-level)
+    - [Complete MLFQ Algorithm Summary](#complete-mlfq-algorithm-summary)
+    - [MLFQ in Practice](#mlfq-in-practice)
+      - [Key Takeaways](#key-takeaways-4)
+      - [Important Terms](#important-terms-4)
+  - [Chapter 5: Scheduling - Proportional Share (Lottery Scheduling)](#chapter-5-scheduling-proportional-share-lottery-scheduling)
+    - [Overview](#overview-4)
+    - [The Lottery Scheduling Concept](#the-lottery-scheduling-concept)
+      - [Basic Idea: Tickets Represent CPU Share](#basic-idea-tickets-represent-cpu-share)
+      - [Why It Works: Law of Large Numbers](#why-it-works-law-of-large-numbers)
+    - [Lottery Scheduling Implementation](#lottery-scheduling-implementation)
+      - [The Core Algorithm](#the-core-algorithm)
+      - [Time Complexity](#time-complexity)
+    - [Ticket Mechanisms: Manipulating Shares](#ticket-mechanisms-manipulating-shares)
+      - [Ticket Currency: Delegation Within User Domain](#ticket-currency-delegation-within-user-domain)
+      - [Ticket Transfer: Temporary Delegation](#ticket-transfer-temporary-delegation)
+      - [Ticket Inflation: Temporary Priority Increase](#ticket-inflation-temporary-priority-increase)
+    - [Lottery Scheduling: Advantages and Disadvantages](#lottery-scheduling-advantages-and-disadvantages)
+      - [Advantages](#advantages)
+      - [Disadvantages](#disadvantages)
+    - [Stride Scheduling: Deterministic Alternative](#stride-scheduling-deterministic-alternative)
+      - [Algorithm Concept](#algorithm-concept)
+      - [Example: Stride Scheduling](#example-stride-scheduling)
+      - [Stride vs. Lottery](#stride-vs-lottery)
+      - [Key Takeaways](#key-takeaways-5)
+      - [Important Terms](#important-terms-5)
+  - [Chapter 6: Comprehensive Scheduling Algorithms Summary](#chapter-6-comprehensive-scheduling-algorithms-summary)
+    - [Historical Timeline and Evolution](#historical-timeline-and-evolution)
+    - [Comprehensive Scheduling Algorithm Comparison](#comprehensive-scheduling-algorithm-comparison)
+      - [Feature Comparison Table](#feature-comparison-table)
+      - [Performance Metrics Comparison](#performance-metrics-comparison)
+      - [Complexity Analysis](#complexity-analysis)
+    - [Detailed Algorithm Specification](#detailed-algorithm-specification)
+      - [FIFO (First In, First Out)](#fifo-first-in-first-out)
+      - [SJF (Shortest Job First)](#sjf-shortest-job-first)
+      - [STCF (Shortest Time-to-Completion First)](#stcf-shortest-time-to-completion-first)
+      - [Round-Robin (RR)](#round-robin-rr)
+      - [MLFQ (Multi-Level Feedback Queue)](#mlfq-multi-level-feedback-queue)
+      - [Lottery Scheduling](#lottery-scheduling)
+      - [Stride Scheduling](#stride-scheduling)
+      - [CFS (Completely Fair Scheduler, Linux)](#cfs-completely-fair-scheduler-linux)
+    - [Modern Linux Approaches (v5.x - v6.x+)](#modern-linux-approaches-v5x-v6x)
+      - [CFS (Completely Fair Scheduler)](#cfs-completely-fair-scheduler)
+      - [Auto Group Scheduling (cgroup integration)](#auto-group-scheduling-cgroup-integration)
+      - [Energy-Aware Scheduling (SCHED_EAS)](#energy-aware-scheduling-sched_eas)
+      - [Real-Time Scheduling (SCHED_FIFO, SCHED_RR)](#real-time-scheduling-sched_fifo-sched_rr)
+      - [Deadline Scheduling (SCHED_DEADLINE)](#deadline-scheduling-sched_deadline)
+    - [Practical Considerations: Choosing a Scheduler](#practical-considerations-choosing-a-scheduler)
+    - [Scheduling in Multi-Core Systems](#scheduling-in-multi-core-systems)
+      - [Challenge: Load Balancing](#challenge-load-balancing)
+      - [NUMA-Aware Scheduling (Linux)](#numa-aware-scheduling-linux)
+    - [Summary: The Evolution of Fairness](#summary-the-evolution-of-fairness)
+    - [Key Insights Across All Schedulers](#key-insights-across-all-schedulers)
+  - [Master Takeaways: Core Operating Systems Concepts](#master-takeaways-core-operating-systems-concepts)
+    - [Process Management](#process-management)
+    - [CPU Scheduling](#cpu-scheduling)
+    - [Design Principles](#design-principles)
+- [Final Summary and References](#final-summary-and-references)
+- [Memory Virtualization: A Comprehensive Engineering Guide](#memory-virtualization-a-comprehensive-engineering-guide)
+  - [Table of Contents](#table-of-contents)
+  - [Chapter 13: The Abstraction - Address Spaces](#chapter-13-the-abstraction-address-spaces)
+    - [13.1 Historical Context: Early Memory Management](#131-historical-context-early-memory-management)
+    - [13.2 Multiprogramming and Time Sharing](#132-multiprogramming-and-time-sharing)
+    - [13.3 The Address Space Abstraction](#133-the-address-space-abstraction)
+      - [Key Properties of an Address Space](#key-properties-of-an-address-space)
+      - [Typical Components of an Address Space](#typical-components-of-an-address-space)
+      - [Why This Abstraction Matters](#why-this-abstraction-matters)
+  - [Chapter 14: Interlude - Memory API](#chapter-14-interlude-memory-api)
+    - [14.1 Types of Memory in C Programs](#141-types-of-memory-in-c-programs)
+      - [Stack Memory (Automatic Memory)](#stack-memory-automatic-memory)
+      - [Heap Memory (Dynamic Memory)](#heap-memory-dynamic-memory)
+    - [14.2 The `malloc()` System Call](#142-the-malloc-system-call)
+    - [14.3 The `free()` System Call](#143-the-free-system-call)
+    - [14.4 Common Memory Management Errors](#144-common-memory-management-errors)
+      - [Error 1: Forgetting to Allocate](#error-1-forgetting-to-allocate)
+      - [Error 2: Buffer Overflow (Not Allocating Enough)](#error-2-buffer-overflow-not-allocating-enough)
+      - [Error 3: Uninitialized Memory Access](#error-3-uninitialized-memory-access)
+      - [Error 4: Memory Leaks](#error-4-memory-leaks)
+  - [Chapter 15: Mechanism - Address Translation](#chapter-15-mechanism-address-translation)
+    - [15.1 The Core Problem](#151-the-core-problem)
+    - [15.2 Hardware-Based Address Translation](#152-hardware-based-address-translation)
+    - [15.3 Base and Bounds (Dynamic Relocation)](#153-base-and-bounds-dynamic-relocation)
+      - [Hardware Translation Formula](#hardware-translation-formula)
+      - [Example Walkthrough](#example-walkthrough)
+      - [Bounds Checking for Protection](#bounds-checking-for-protection)
+      - [Hardware Component](#hardware-component)
+      - [Example Process Execution](#example-process-execution)
+    - [15.4 Advantages and Limitations](#154-advantages-and-limitations)
+      - [Advantages](#advantages-1)
+      - [Limitations](#limitations)
+  - [Chapter 16: Segmentation](#chapter-16-segmentation)
+    - [16.1 The Problem with Base-and-Bounds](#161-the-problem-with-base-and-bounds)
+    - [16.2 Segmentation: Multiple Base-and-Bounds Pairs](#162-segmentation-multiple-base-and-bounds-pairs)
+      - [Explicit Segmentation (Hardware Determines Segment by Address Bits)](#explicit-segmentation-hardware-determines-segment-by-address-bits)
+      - [Segment-Based Address Translation Algorithm](#segment-based-address-translation-algorithm)
+      - [Concrete Example](#concrete-example)
+      - [Hardware Segment Register State](#hardware-segment-register-state)
+    - [16.3 Handling Backward-Growing Segments (Stack)](#163-handling-backward-growing-segments-stack)
+    - [16.4 Support for Code Sharing](#164-support-for-code-sharing)
+    - [16.5 Coarse-Grained vs. Fine-Grained Segmentation](#165-coarse-grained-vs-fine-grained-segmentation)
+      - [Coarse-Grained (Modern systems)](#coarse-grained-modern-systems)
+      - [Fine-Grained (Multics, B5000)](#fine-grained-multics-b5000)
+    - [16.6 The Fragmentation Problem](#166-the-fragmentation-problem)
+      - [External Fragmentation](#external-fragmentation)
+      - [Allocation Strategies](#allocation-strategies)
+  - [Chapter 17: Free-Space Management](#chapter-17-free-space-management)
+    - [17.1 Heap Data Structure: Free List](#171-heap-data-structure-free-list)
+      - [Free List with Headers](#free-list-with-headers)
+      - [Example Heap Lifecycle](#example-heap-lifecycle)
+    - [17.2 Basic Allocation Strategies](#172-basic-allocation-strategies)
+      - [Best Fit](#best-fit)
+      - [Worst Fit](#worst-fit)
+      - [First Fit](#first-fit)
+      - [Next Fit](#next-fit)
+    - [17.3 Advanced Approaches](#173-advanced-approaches)
+      - [Segregated Lists](#segregated-lists)
+      - [Slab Allocator (Jeff Bonwick, Solaris)](#slab-allocator-jeff-bonwick-solaris)
+      - [Buddy Allocation](#buddy-allocation)
+    - [17.4 Growing the Heap](#174-growing-the-heap)
+  - [Chapter 18: Paging - Introduction](#chapter-18-paging-introduction)
+    - [18.1 Limitations of Segmentation](#181-limitations-of-segmentation)
+    - [18.2 Paging: Basic Concept](#182-paging-basic-concept)
+      - [Address Space Division](#address-space-division)
+      - [Key Insight](#key-insight)
+    - [18.3 Page Table Structure and Contents](#183-page-table-structure-and-contents)
+      - [Linear Page Table (Simple Array)](#linear-page-table-simple-array)
+      - [Page Table Entry (PTE) Fields](#page-table-entry-pte-fields)
+      - [Meaning of Key Bits](#meaning-of-key-bits)
+    - [18.4 Address Translation with Paging](#184-address-translation-with-paging)
+      - [Algorithm](#algorithm)
+    - [18.5 The Paging Slowdown Problem](#185-the-paging-slowdown-problem)
+    - [18.6 Example Memory Trace](#186-example-memory-trace)
+  - [Chapter 19: Paging - Faster Translations (TLBs)](#chapter-19-paging-faster-translations-tlbs)
+    - [19.1 The TLB: Translation Lookaside Buffer](#191-the-tlb-translation-lookaside-buffer)
+    - [19.2 TLB Organization](#192-tlb-organization)
+      - [TLB Entry Format](#tlb-entry-format)
+      - [TLB Lookup Algorithm (Hardware Managed)](#tlb-lookup-algorithm-hardware-managed)
+    - [19.3 Who Handles TLB Misses?](#193-who-handles-tlb-misses)
+      - [Hardware-Managed TLB (x86, older systems)](#hardware-managed-tlb-x86-older-systems)
+      - [Software-Managed TLB (MIPS, SPARC)](#software-managed-tlb-mips-sparc)
+    - [19.4 Context Switches and the TLB Problem](#194-context-switches-and-the-tlb-problem)
+      - [Solution 1: Flush TLB on Context Switch](#solution-1-flush-tlb-on-context-switch)
+      - [Solution 2: Address Space Identifier (ASID)](#solution-2-address-space-identifier-asid)
+    - [19.5 TLB Performance Impact](#195-tlb-performance-impact)
+  - [Chapter 20: Paging - Smaller Tables](#chapter-20-paging-smaller-tables)
+    - [20.1 The Page Table Size Problem](#201-the-page-table-size-problem)
+    - [20.2 Multi-Level Page Tables](#202-multi-level-page-tables)
+      - [Two-Level Page Table (x86)](#two-level-page-table-x86)
+      - [Advantages of Multi-Level](#advantages-of-multi-level)
+      - [Example: Sparse Address Space](#example-sparse-address-space)
+      - [Three-Level and Beyond](#three-level-and-beyond)
+    - [20.3 Hybrid Approach: Paging and Segmentation](#203-hybrid-approach-paging-and-segmentation)
+  - [Chapter 21: Beyond Physical Memory - Mechanisms](#chapter-21-beyond-physical-memory-mechanisms)
+    - [21.1 The Problem: Address Spaces Larger Than Physical Memory](#211-the-problem-address-spaces-larger-than-physical-memory)
+    - [21.2 Page Faults and the Present Bit](#212-page-faults-and-the-present-bit)
+      - [Page Fault Handling](#page-fault-handling)
+    - [21.3 What If Memory Is Full?](#213-what-if-memory-is-full)
+    - [21.4 Page Fault Control Flow](#214-page-fault-control-flow)
+    - [21.5 Swap Space Management](#215-swap-space-management)
+  - [Chapter 22: Beyond Physical Memory - Policies](#chapter-22-beyond-physical-memory-policies)
+    - [22.1 Page Replacement Policies](#221-page-replacement-policies)
+    - [22.2 The Optimal Policy](#222-the-optimal-policy)
+    - [22.3 FIFO (First In First Out)](#223-fifo-first-in-first-out)
+    - [22.4 LRU (Least Recently Used)](#224-lru-least-recently-used)
+    - [22.5 Approximating LRU: The Clock Algorithm](#225-approximating-lru-the-clock-algorithm)
+    - [22.6 Considering Dirty Pages](#226-considering-dirty-pages)
+      - [Key Takeaways](#key-takeaways-6)
+      - [Important Terms](#important-terms-6)
+  - [Summary: The Complete Memory Virtualization Picture](#summary-the-complete-memory-virtualization-picture)
+    - [The Three Layers](#the-three-layers)
+    - [Why Multiple Techniques?](#why-multiple-techniques)
+    - [Performance Equation](#performance-equation)
+    - [Practical Implementation](#practical-implementation)
+- [Concurrency and Synchronization: A Complete Study Guide](#concurrency-and-synchronization-a-complete-study-guide)
+  - [Table of Contents](#table-of-contents-1)
+  - [Chapter 26: Concurrency: An Introduction](#chapter-26-concurrency-an-introduction)
+    - [26.1 Introduction to Threads and Concurrency](#261-introduction-to-threads-and-concurrency)
+      - [What Are Threads?](#what-are-threads)
+      - [Why Threads Matter: The Concurrency Problem](#why-threads-matter-the-concurrency-problem)
+    - [26.2 Thread Creation and Execution](#262-thread-creation-and-execution)
+      - [Basic POSIX Thread Example](#basic-posix-thread-example)
+      - [Thread Execution Traces](#thread-execution-traces)
+    - [26.3 Race Conditions and the Critical Section Problem](#263-race-conditions-and-the-critical-section-problem)
+      - [The Race Condition](#the-race-condition)
+      - [Low-Level Assembly: Why This Happens](#low-level-assembly-why-this-happens)
+      - [Detailed Execution Trace](#detailed-execution-trace)
+      - [The Critical Section](#the-critical-section)
+    - [26.4 The Heart of the Problem: Uncontrolled Scheduling](#264-the-heart-of-the-problem-uncontrolled-scheduling)
+  - [Chapter 28: Locks](#chapter-28-locks)
+    - [28.1 Locks: The Basic Idea](#281-locks-the-basic-idea)
+      - [What Is a Lock?](#what-is-a-lock)
+      - [Lock Semantics](#lock-semantics)
+      - [Example: Using a Lock to Protect a Critical Section](#example-using-a-lock-to-protect-a-critical-section)
+      - [POSIX Mutex Example](#posix-mutex-example)
+    - [28.2 Evaluating Locks](#282-evaluating-locks)
+    - [28.3 Building Locks: Hardware Support](#283-building-locks-hardware-support)
+      - [Challenge: Disabling Interrupts (Single-CPU Only)](#challenge-disabling-interrupts-single-cpu-only)
+      - [Test-and-Set (Atomic Instruction)](#test-and-set-atomic-instruction)
+      - [Compare-and-Swap (CAS)](#compare-and-swap-cas)
+      - [Fetch-and-Add and Ticket Locks](#fetch-and-add-and-ticket-locks)
+    - [28.4 OS Support for Efficient Locks](#284-os-support-for-efficient-locks)
+      - [The Spinning Problem](#the-spinning-problem)
+      - [Yield-Based Locking](#yield-based-locking)
+      - [Queue-Based Locking with park() and unpark()](#queue-based-locking-with-park-and-unpark)
+      - [Linux Futexes](#linux-futexes)
+    - [28.5 Summary: Building Efficient Locks](#285-summary-building-efficient-locks)
+  - [Chapter 29: Lock-Based Concurrent Data Structures](#chapter-29-lock-based-concurrent-data-structures)
+    - [29.1 Concurrent Counter](#291-concurrent-counter)
+    - [29.2 Concurrent Linked List](#292-concurrent-linked-list)
+      - [Naive Approach (Coarse-Grained Locking)](#naive-approach-coarse-grained-locking)
+      - [Optimized Approach: Lock Only the Critical Section](#optimized-approach-lock-only-the-critical-section)
+      - [Fine-Grained Locking: Hand-Over-Hand Locking](#fine-grained-locking-hand-over-hand-locking)
+    - [29.3 Concurrent Queue](#293-concurrent-queue)
+    - [29.4 Concurrent Hash Table](#294-concurrent-hash-table)
+  - [Chapter 30: Condition Variables](#chapter-30-condition-variables)
+    - [30.1 The Need for Condition Variables](#301-the-need-for-condition-variables)
+      - [Example: Producer-Consumer Problem](#example-producer-consumer-problem)
+    - [30.2 Condition Variables: Core Semantics](#302-condition-variables-core-semantics)
+      - [`wait(lock)`](#waitlock)
+      - [`signal(lock)`](#signallock)
+      - [`broadcast()`](#broadcast)
+    - [30.3 Example: Producer-Consumer with Condition Variables](#303-example-producer-consumer-with-condition-variables)
+      - [Execution Timeline](#execution-timeline)
+      - [Why Use `while` Instead of `if`?](#why-use-while-instead-of-if)
+    - [30.4 Important Rules for Condition Variables](#304-important-rules-for-condition-variables)
+  - [Chapter 31: Semaphores](#chapter-31-semaphores)
+    - [31.1 Introduction to Semaphores](#311-introduction-to-semaphores)
+      - [Semaphore Operations](#semaphore-operations)
+    - [31.2 Using Semaphores as Mutexes (Locks)](#312-using-semaphores-as-mutexes-locks)
+    - [31.3 Using Semaphores for Ordering](#313-using-semaphores-for-ordering)
+    - [31.4 Producer-Consumer Problem with Semaphores](#314-producer-consumer-problem-with-semaphores)
+      - [Initial Attempt (Incorrect)](#initial-attempt-incorrect)
+      - [Corrected Solution (with Mutex)](#corrected-solution-with-mutex)
+    - [31.5 Initializing Semaphores Correctly](#315-initializing-semaphores-correctly)
+    - [31.6 Semaphores vs. Condition Variables vs. Locks](#316-semaphores-vs-condition-variables-vs-locks)
+  - [Key Takeaways](#key-takeaways-7)
+    - [Chapter 26: Concurrency and Introduction](#chapter-26-concurrency-and-introduction)
+    - [Chapter 28: Locks](#chapter-28-locks-1)
+    - [Chapter 29: Lock-Based Concurrent Data Structures](#chapter-29-lock-based-concurrent-data-structures-1)
+    - [Chapter 30: Condition Variables](#chapter-30-condition-variables-1)
+    - [Chapter 31: Semaphores](#chapter-31-semaphores-1)
+  - [Important Terms](#important-terms-7)
+  - [ASCII Diagrams: Visual Reference](#ascii-diagrams-visual-reference)
+    - [Thread Interleaving and Context Switches](#thread-interleaving-and-context-switches)
+    - [Race Condition: Counter Example](#race-condition-counter-example)
+    - [Thread States and Transitions](#thread-states-and-transitions)
+    - [Lock Acquisition and Release](#lock-acquisition-and-release)
+    - [Condition Variable Synchronization](#condition-variable-synchronization)
+    - [Semaphore State: Binary Lock (N=1)](#semaphore-state-binary-lock-n1)
+    - [Semaphore State: Ordering (N=0)](#semaphore-state-ordering-n0)
+    - [Lock Contention and Scaling](#lock-contention-and-scaling)
+  - [Summary and Study Recommendations](#summary-and-study-recommendations)
+- [I/O, Storage & Persistence: Comprehensive OS Study Guide](#io-storage-persistence-comprehensive-os-study-guide)
+  - [Table of Contents](#table-of-contents-2)
+  - [Chapter 36: I/O Devices](#chapter-36-io-devices)
+    - [Overview](#overview-5)
+    - [System Architecture](#system-architecture)
+      - [I/O Bus Hierarchy](#io-bus-hierarchy)
+    - [I/O Communication Methods](#io-communication-methods)
+      - [1. Polling](#1-polling)
+      - [2. Interrupt-Driven I/O](#2-interrupt-driven-io)
+      - [3. Direct Memory Access (DMA)](#3-direct-memory-access-dma)
+      - [Performance Trade-offs](#performance-trade-offs)
+    - [Example: xv6 IDE Driver (Disk Interface)](#example-xv6-ide-driver-disk-interface)
+  - [Chapter 37: Hard Disk Drives](#chapter-37-hard-disk-drives)
+    - [Disk Mechanics](#disk-mechanics)
+      - [Physical Structure](#physical-structure)
+      - [Disk Address Mapping](#disk-address-mapping)
+    - [Disk Performance Model](#disk-performance-model)
+      - [I/O Time Formula](#io-time-formula)
+      - [Example Calculation](#example-calculation)
+    - [Disk Scheduling Algorithms](#disk-scheduling-algorithms)
+      - [1. Shortest-Seek-Time-First (SSTF)](#1-shortest-seek-time-first-sstf)
+      - [2. SCAN ("Elevator Algorithm")](#2-scan-elevator-algorithm)
+      - [3. C-SCAN (Circular SCAN)](#3-c-scan-circular-scan)
+      - [4. SPTF (Shortest-Positioning-Time-First)](#4-sptf-shortest-positioning-time-first)
+    - [Comparison Table](#comparison-table)
+    - [Write Buffering & Caching](#write-buffering-caching)
+  - [Chapter 38: RAID](#chapter-38-raid)
+    - [Motivation](#motivation)
+    - [RAID Levels](#raid-levels)
+      - [RAID-0: Striping (No Redundancy)](#raid-0-striping-no-redundancy)
+      - [RAID-1: Mirroring](#raid-1-mirroring)
+      - [RAID-4: Block-Level Striping with Dedicated Parity](#raid-4-block-level-striping-with-dedicated-parity)
+      - [RAID-5: Distributed Parity](#raid-5-distributed-parity)
+    - [RAID Comparison Table](#raid-comparison-table)
+    - [When to Use Each](#when-to-use-each)
+  - [Chapter 39: Files and Directories](#chapter-39-files-and-directories)
+    - [File Abstraction](#file-abstraction)
+    - [File System Calls](#file-system-calls)
+      - [Opening a File](#opening-a-file)
+      - [Reading from a File](#reading-from-a-file)
+      - [Writing to a File](#writing-to-a-file)
+      - [Seeking Within a File](#seeking-within-a-file)
+      - [Forcing Durability](#forcing-durability)
+    - [Directory Operations](#directory-operations)
+      - [Listing Directory Contents](#listing-directory-contents)
+      - [Creating Directories](#creating-directories)
+      - [Directory Listing Example](#directory-listing-example)
+    - [File Metadata: Stat](#file-metadata-stat)
+    - [Hard Links and Symbolic Links](#hard-links-and-symbolic-links)
+      - [Hard Links](#hard-links)
+      - [Symbolic Links (Soft Links)](#symbolic-links-soft-links)
+      - [Comparison](#comparison)
+    - [Path Name Resolution](#path-name-resolution)
+  - [Chapter 40: File System Implementation](#chapter-40-file-system-implementation)
+    - [VSFS: Very Simple File System](#vsfs-very-simple-file-system)
+    - [On-Disk Layout](#on-disk-layout)
+    - [Inode Structure](#inode-structure)
+    - [Multi-Level Index: Block Pointers](#multi-level-index-block-pointers)
+      - [Direct Blocks](#direct-blocks)
+      - [Indirect Blocks](#indirect-blocks)
+      - [Double-Indirect Blocks](#double-indirect-blocks)
+      - [Triple-Indirect Blocks](#triple-indirect-blocks)
+    - [Example: Multi-Level Index Calculation](#example-multi-level-index-calculation)
+    - [Directory Organization](#directory-organization)
+    - [Free Space Management](#free-space-management)
+      - [Bitmaps](#bitmaps)
+    - [File System Access Paths](#file-system-access-paths)
+      - [Reading a File: `/foo/bar` (3 blocks)](#reading-a-file-foobar-3-blocks)
+      - [Writing a File (Creating `/foo/bar`)](#writing-a-file-creating-foobar)
+    - [Caching and Buffering](#caching-and-buffering)
+      - [Unified Page Cache](#unified-page-cache)
+      - [Write Buffering](#write-buffering)
+  - [Chapter 41: Locality and the Fast File System](#chapter-41-locality-and-the-fast-file-system)
+    - [The Problem: Fragmentation in Old UNIX FS](#the-problem-fragmentation-in-old-unix-fs)
+    - [Solution: FFS (Fast File System)](#solution-ffs-fast-file-system)
+    - [Cylinder Groups](#cylinder-groups)
+    - [FFS Allocation Policies](#ffs-allocation-policies)
+      - [Directory Allocation](#directory-allocation)
+      - [File Allocation](#file-allocation)
+      - [Example Layout](#example-layout)
+    - [Handling Large Files](#handling-large-files)
+    - [Disk Layout Optimization](#disk-layout-optimization)
+    - [FFS Features](#ffs-features)
+      - [Sub-block Allocation](#sub-block-allocation)
+      - [Features for Usability](#features-for-usability)
+    - [FFS Measurements](#ffs-measurements)
+  - [Chapter 42: Crash Consistency & Journaling](#chapter-42-crash-consistency-journaling)
+    - [The Crash Consistency Problem](#the-crash-consistency-problem)
+    - [Example: Appending to File](#example-appending-to-file)
+    - [Crash Scenarios](#crash-scenarios)
+      - [Case 1: Only D_b written](#case-1-only-d_b-written)
+      - [Case 2: Only I[v2] written](#case-2-only-iv2-written)
+      - [Case 3: Only B[v2] written](#case-3-only-bv2-written)
+      - [Case 4: I[v2] and B[v2] written, not D_b](#case-4-iv2-and-bv2-written-not-d_b)
+    - [Solution 1: fsck (File System Checker)](#solution-1-fsck-file-system-checker)
+      - [FSCK Phases](#fsck-phases)
+      - [Example FSCK Recovery](#example-fsck-recovery)
+      - [FSCK Problems](#fsck-problems)
+    - [Solution 2: Journaling (Write-Ahead Logging)](#solution-2-journaling-write-ahead-logging)
+      - [Basic Protocol](#basic-protocol)
+      - [Why Order Matters](#why-order-matters)
+      - [Data Journaling Example](#data-journaling-example)
+      - [Metadata Journaling (Ordered Journaling)](#metadata-journaling-ordered-journaling)
+      - [Transaction Batching](#transaction-batching)
+      - [Journal Circular Buffer](#journal-circular-buffer)
+      - [Special Case: Block Reuse](#special-case-block-reuse)
+  - [Chapter 43: Log-Structured File Systems](#chapter-43-log-structured-file-systems)
+    - [Motivation](#motivation-1)
+    - [LFS (Log-Structured File System) Approach](#lfs-log-structured-file-system-approach)
+    - [Structure: Segments](#structure-segments)
+    - [Solution: Inode Map (Indirection)](#solution-inode-map-indirection)
+    - [Checkpoint Region](#checkpoint-region)
+    - [Reading File from Disk](#reading-file-from-disk)
+    - [The Garbage Collection Problem](#the-garbage-collection-problem)
+      - [Block Liveness Determination](#block-liveness-determination)
+      - [Cleaning Policy](#cleaning-policy)
+      - [Cleaning Example](#cleaning-example)
+    - [Crash Recovery](#crash-recovery)
+  - [Chapter 44: Flash-Based SSDs](#chapter-44-flash-based-ssds)
+    - [Flash Storage Technology](#flash-storage-technology)
+    - [Flash Organization](#flash-organization)
+    - [Flash Operations](#flash-operations)
+      - [Read Page](#read-page)
+      - [Erase Block](#erase-block)
+      - [Program Page](#program-page)
+    - [Flash State Transitions](#flash-state-transitions)
+    - [Write Amplification](#write-amplification)
+    - [Flash Translation Layer (FTL)](#flash-translation-layer-ftl)
+    - [Wear Leveling](#wear-leveling)
+    - [Garbage Collection](#garbage-collection)
+    - [SSD Performance Characteristics](#ssd-performance-characteristics)
+  - [Chapter 45: Data Integrity and Protection](#chapter-45-data-integrity-and-protection)
+    - [Data Corruption Sources](#data-corruption-sources)
+    - [Detection: Checksums](#detection-checksums)
+      - [Checksum Algorithm](#checksum-algorithm)
+      - [CRC (Cyclic Redundancy Check)](#crc-cyclic-redundancy-check)
+    - [Recovery: Redundancy](#recovery-redundancy)
+      - [Replication](#replication)
+      - [Parity](#parity)
+    - [Example: Whole-Disk Checksums](#example-whole-disk-checksums)
+    - [Silent Data Corruption Challenges](#silent-data-corruption-challenges)
+  - [Key Takeaways by Topic](#key-takeaways-by-topic)
+    - [I/O System Design](#io-system-design)
+    - [Disk Performance](#disk-performance)
+    - [RAID](#raid)
+    - [File Systems](#file-systems)
+    - [FFS & Locality](#ffs-locality)
+    - [Crash Consistency](#crash-consistency)
+    - [LFS (Log-Structured FS)](#lfs-log-structured-fs)
+    - [Flash SSDs](#flash-ssds)
+    - [Data Protection](#data-protection)
+  - [Terminology Reference](#terminology-reference)
+- [Distributed Systems & Networking: Comprehensive Study Guide](#distributed-systems-networking-comprehensive-study-guide)
+  - [Chapter 48: Distributed Systems Foundations](#chapter-48-distributed-systems-foundations)
+    - [Introduction to Distributed Systems](#introduction-to-distributed-systems)
+    - [48.1 Packet Loss and Network Unreliability](#481-packet-loss-and-network-unreliability)
+      - [Understanding Packet Loss](#understanding-packet-loss)
+      - [Checksums for Data Integrity](#checksums-for-data-integrity)
+    - [48.2 Unreliable Communication: UDP](#482-unreliable-communication-udp)
+      - [UDP Socket Basics](#udp-socket-basics)
+      - [Address Resolution](#address-resolution)
+      - [Sending and Receiving Data](#sending-and-receiving-data)
+      - [Complete Client-Server Example](#complete-client-server-example)
+    - [48.3 Reliable Communication: Timeout, Retry, and Sequence Numbers](#483-reliable-communication-timeout-retry-and-sequence-numbers)
+      - [Mechanism 1: Acknowledgments](#mechanism-1-acknowledgments)
+      - [Mechanism 2: Timeout and Retry](#mechanism-2-timeout-and-retry)
+      - [Mechanism 3: Sequence Numbers to Prevent Duplicates](#mechanism-3-sequence-numbers-to-prevent-duplicates)
+      - [TCP: The Standard Reliable Layer](#tcp-the-standard-reliable-layer)
+    - [48.4 Communication Abstractions: Beyond Raw Messaging](#484-communication-abstractions-beyond-raw-messaging)
+      - [Distributed Shared Memory (DSM)](#distributed-shared-memory-dsm)
+    - [48.5 Remote Procedure Call (RPC)](#485-remote-procedure-call-rpc)
+      - [The RPC Abstraction](#the-rpc-abstraction)
+      - [RPC Architecture: Two Main Components](#rpc-architecture-two-main-components)
+      - [Client-Side Stub Operations](#client-side-stub-operations)
+      - [Server-Side Stub Operations](#server-side-stub-operations)
+      - [Complex Arguments Challenge](#complex-arguments-challenge)
+      - [Server Concurrency: Thread Pool](#server-concurrency-thread-pool)
+      - [RPC Runtime Library Issues](#rpc-runtime-library-issues)
+      - [Problem 2: Transport Protocol Choice](#problem-2-transport-protocol-choice)
+      - [Endianness Handling](#endianness-handling)
+      - [Asynchronous RPC](#asynchronous-rpc)
+      - [Long-Running Remote Calls](#long-running-remote-calls)
+      - [Large Message Fragmentation](#large-message-fragmentation)
+    - [48.6 The End-to-End Argument](#486-the-end-to-end-argument)
+      - [Example: Reliable File Transfer](#example-reliable-file-transfer)
+  - [Chapter 49: Sun's Network File System (NFS)](#chapter-49-suns-network-file-system-nfs)
+    - [49.1 Introduction to Distributed File Systems](#491-introduction-to-distributed-file-systems)
+      - [Architecture](#architecture)
+      - [Benefits vs. Local File Systems](#benefits-vs-local-file-systems)
+      - [Client-Server Components](#client-server-components)
+    - [49.2 NFS Protocol Design Philosophy](#492-nfs-protocol-design-philosophy)
+    - [49.3 Stateless vs. Stateful Protocols](#493-stateless-vs-stateful-protocols)
+      - [Stateful Protocol: Problems](#stateful-protocol-problems)
+      - [Stateless Protocol: NFS Solution](#stateless-protocol-nfs-solution)
+    - [49.4 File Handles in NFS](#494-file-handles-in-nfs)
+      - [Why Each Component?](#why-each-component)
+    - [49.5 NFSv2 Protocol Operations](#495-nfsv2-protocol-operations)
+      - [Example: Reading a File](#example-reading-a-file)
+    - [49.6 Handling Server Failure: Idempotency](#496-handling-server-failure-idempotency)
+      - [The Problem](#the-problem-1)
+      - [Idempotency: The Solution](#idempotency-the-solution)
+      - [NFS Idempotent Operations](#nfs-idempotent-operations)
+      - [Non-Idempotent Operations: mkdir](#non-idempotent-operations-mkdir)
+    - [49.7 Client-Side Caching](#497-client-side-caching)
+      - [Basic Idea](#basic-idea)
+      - [Write Buffering: Decoupling Latency from Performance](#write-buffering-decoupling-latency-from-performance)
+    - [49.8 The Cache Consistency Problem](#498-the-cache-consistency-problem)
+      - [Problem Scenario](#problem-scenario)
+      - [Solution 1: Flush-on-Close (Close-to-Open Consistency)](#solution-1-flush-on-close-close-to-open-consistency)
+      - [Solution 2: Attribute Cache to Reduce GETATTR Traffic](#solution-2-attribute-cache-to-reduce-getattr-traffic)
+    - [49.9 Server-Side Write Buffering](#499-server-side-write-buffering)
+    - [49.10 Summary: Key NFS Design Insights](#4910-summary-key-nfs-design-insights)
+      - [Key Takeaways](#key-takeaways-8)
+      - [Important Terms](#important-terms-8)
+  - [Chapter 50: The Andrew File System (AFS)](#chapter-50-the-andrew-file-system-afs)
+    - [50.1 Design Goal: Scalability](#501-design-goal-scalability)
+    - [50.2 AFSv1: Whole-File Caching](#502-afsv1-whole-file-caching)
+      - [Design Principle: Whole-File Caching on Local Disk](#design-principle-whole-file-caching-on-local-disk)
+      - [File Operations](#file-operations)
+      - [Protocol Operations](#protocol-operations)
+      - [Problems Identified](#problems-identified)
+    - [50.3 AFSv2: Callbacks and File Identifiers](#503-afsv2-callbacks-and-file-identifiers)
+      - [Key Innovation 1: Callbacks](#key-innovation-1-callbacks)
+      - [Key Innovation 2: File Identifiers (FID)](#key-innovation-2-file-identifiers-fid)
+      - [Complete File Access Timeline](#complete-file-access-timeline)
+    - [50.4 Cache Consistency in AFSv2](#504-cache-consistency-in-afsv2)
+      - [Between-Machine Consistency](#between-machine-consistency)
+      - [Within-Machine Consistency](#within-machine-consistency)
+    - [50.5 Crash Recovery in AFSv2](#505-crash-recovery-in-afsv2)
+      - [Client Crash Recovery](#client-crash-recovery)
+      - [Server Crash Recovery](#server-crash-recovery)
+    - [50.6 Performance Comparison: AFS vs. NFS](#506-performance-comparison-afs-vs-nfs)
+      - [Key Observations](#key-observations)
+    - [50.7 AFS Additional Features](#507-afs-additional-features)
+    - [50.8 Summary: NFS vs. AFS](#508-summary-nfs-vs-afs)
+      - [Key Takeaways](#key-takeaways-9)
+      - [Important Terms](#important-terms-9)
+  - [Chapter 51: Dialogue Summary on Distributed Systems](#chapter-51-dialogue-summary-on-distributed-systems)
+  - [Synthesis: Key Principles Across All Chapters](#synthesis-key-principles-across-all-chapters)
+    - [Principle 1: The End-to-End Argument](#principle-1-the-end-to-end-argument)
+    - [Principle 2: Statelessness Enables Simplicity](#principle-2-statelessness-enables-simplicity)
+    - [Principle 3: Idempotency Enables Replay](#principle-3-idempotency-enables-replay)
+    - [Principle 4: Protocol Design Affects Scalability](#principle-4-protocol-design-affects-scalability)
+    - [Principle 5: Caching Improves Performance but Adds Complexity](#principle-5-caching-improves-performance-but-adds-complexity)
+    - [Principle 6: Measurement Drives Design](#principle-6-measurement-drives-design)
+  - [Reference: Protocol Comparison Table](#reference-protocol-comparison-table)
+  - [Glossary of Key Terms](#glossary-of-key-terms)
+
+<!-- TOC end -->
+
+<!-- TOC --><a name="operating-systems-fundamentals-process-management"></a>
+
 # Operating Systems: Fundamentals & Process Management
 
+<!-- TOC --><a name="chapter-3-introduction-to-operating-systems-the-von-neumann-model"></a>
+
 ## Chapter 3: Introduction to Operating Systems & The Von Neumann Model
+
+<!-- TOC --><a name="the-foundational-computer-architecture"></a>
 
 ### The Foundational Computer Architecture
 
 All modern computers follow the **Von Neumann model of computing**. This is the underlying architectural principle that dictates how a processor executes programs:
+
+<!-- TOC --><a name="the-fetch-decode-execute-cycle"></a>
 
 #### The Fetch-Decode-Execute Cycle
 
@@ -41,12 +692,16 @@ A running program executes through a repetitive process:
 
 **Key Point:** From the program's perspective, instructions execute one at a time in sequential order. (Modern processors actually do bizarre optimizations underneath—like executing multiple instructions simultaneously or completing them out of order—but this simplicity is what programs assume.)
 
+<!-- TOC --><a name="the-operating-system-as-resource-virtualization-layer"></a>
+
 ### The Operating System as Resource Virtualization Layer
 
 The **operating system (OS)** is system software with two primary responsibilities:
 
 1. **Virtualization**: Transform physical hardware resources into virtual, abstract resources that are easier and safer to use
 2. **Resource Management**: Coordinate access to shared physical resources (CPU, memory, disk) among multiple competing programs
+
+<!-- TOC --><a name="the-three-core-virtualization-domains"></a>
 
 #### The Three Core Virtualization Domains
 
@@ -58,6 +713,8 @@ The OS virtualizes three main resource types:
 | **Memory** | Shared physical RAM             | Private address space per process | Each program sees its own isolated memory      |
 | **Disk**   | Single shared storage device    | Files and directories             | Persistent, organized data access              |
 
+<!-- TOC --><a name="system-calls-the-process-os-interface"></a>
+
 ### System Calls: The Process-OS Interface
 
 To use the OS's virtualized resources, programs invoke **system calls** (also called syscalls). A typical modern OS exports **hundreds of system calls** that provide APIs for:
@@ -67,6 +724,8 @@ To use the OS's virtualized resources, programs invoke **system calls** (also ca
 - Reading/writing files and devices
 - Inter-process communication
 - Setting process priorities and permissions
+
+<!-- TOC --><a name="the-mechanism-vs-policy-design-pattern"></a>
 
 ### The Mechanism vs. Policy Design Pattern
 
@@ -81,7 +740,11 @@ This separation allows OS designers to change policies (e.g., switch scheduling 
 
 ---
 
+<!-- TOC --><a name="chapter-4-the-abstractionthe-process"></a>
+
 ## Chapter 4: The Abstraction—The Process
+
+<!-- TOC --><a name="what-is-a-process"></a>
 
 ### What is a Process?
 
@@ -96,9 +759,13 @@ A **process** is the fundamental OS abstraction for a running program. It encaps
 
 Multiple instances of the same program can run as separate processes, each with isolated state and memory.
 
+<!-- TOC --><a name="process-creation-from-program-to-running-process"></a>
+
 ### Process Creation: From Program to Running Process
 
 When the OS launches a program, it performs several sequential steps:
+
+<!-- TOC --><a name="step-1-load-code-and-static-data"></a>
 
 #### Step 1: Load Code and Static Data
 
@@ -112,6 +779,8 @@ Disk (On-disk executable)  →  Memory (Address Space)
 
 - **Early/Simple OS**: Eager loading — load entire program before execution starts
 - **Modern OS**: Lazy loading — load code/data pieces only as needed during execution (requires paging/swapping machinery)
+
+<!-- TOC --><a name="step-2-allocate-and-initialize-runtime-memory-structures"></a>
 
 #### Step 2: Allocate and Initialize Runtime Memory Structures
 
@@ -146,6 +815,8 @@ The OS allocates several memory regions for the process:
 | **BSS (Uninitialized)** | Global/static variables without initial values         | OS zeroes out                                       | Fixed, set to zero                              |
 | **Code/Text**           | Program instructions                                   | OS loads from executable                            | Read-only; shared among process instances       |
 
+<!-- TOC --><a name="step-3-initialize-io-file-descriptors"></a>
+
 #### Step 3: Initialize I/O File Descriptors
 
 In UNIX-based systems, the OS opens three standard file descriptors for every process:
@@ -158,13 +829,19 @@ In UNIX-based systems, the OS opens three standard file descriptors for every pr
 
 These are stored in the process's open file table and enable the process to read from the keyboard and write to the screen without explicit file operations.
 
+<!-- TOC --><a name="step-4-start-program-execution"></a>
+
 #### Step 4: Start Program Execution
 
 The OS transfers CPU control to the process by jumping to the `main()` function entry point. From this moment, the process begins executing its instructions.
 
+<!-- TOC --><a name="the-process-api"></a>
+
 ### The Process API
 
 Any modern OS provides these fundamental operations on processes:
+
+<!-- TOC --><a name="create"></a>
 
 #### Create
 
@@ -172,11 +849,15 @@ Any modern OS provides these fundamental operations on processes:
 - **Trigger**: User types shell command, double-clicks application icon
 - **Kernel Action**: Allocates process structure, loads program code, initializes memory regions, adds to process list
 
+<!-- TOC --><a name="destroy"></a>
+
 #### Destroy
 
 - **System Call**: `exit()` (implicit); `kill()` (explicit termination)
 - **Trigger**: Process finishes naturally; user force-terminates runaway process
 - **Kernel Action**: Deallocates all process resources, removes from scheduling queue
+
+<!-- TOC --><a name="wait"></a>
 
 #### Wait
 
@@ -184,20 +865,28 @@ Any modern OS provides these fundamental operations on processes:
 - **Purpose**: Parent process blocks until a child process completes
 - **Return Value**: Exit status code of child process
 
+<!-- TOC --><a name="miscellaneous-control"></a>
+
 #### Miscellaneous Control
 
 - **Suspend**: Pause process execution without terminating (e.g., `SIGSTOP` signal)
 - **Resume**: Continue suspended process (e.g., `SIGCONT` signal)
 - **Priority Adjustment**: `nice()`, `renice()` to change scheduling priority
 
+<!-- TOC --><a name="status"></a>
+
 #### Status
 
 - **Query Runtime Metrics**: How long has the process run? What state is it in?
 - **System Call**: `getpid()`, `getppid()`, `/proc/[pid]/` filesystem queries
 
+<!-- TOC --><a name="process-states-and-state-transitions"></a>
+
 ### Process States and State Transitions
 
 A process exists in one of three primary states at any moment:
+
+<!-- TOC --><a name="running"></a>
 
 #### Running
 
@@ -205,12 +894,16 @@ A process exists in one of three primary states at any moment:
 - **Resource Allocation**: Actively using processor time
 - **Transition Out**: Scheduler decides to switch processes (descheduling) OR process initiates I/O
 
+<!-- TOC --><a name="ready"></a>
+
 #### Ready
 
 - **Definition**: Process is prepared to run but OS scheduler hasn't selected it
 - **Resource Status**: Waiting for CPU time
 - **Reason**: Another process is running; scheduler has higher-priority processes
 - **Transition**: To Running (scheduling), To Ready (deschedule)
+
+<!-- TOC --><a name="blocked"></a>
 
 #### Blocked
 
@@ -222,6 +915,8 @@ A process exists in one of three primary states at any moment:
   - Lock acquisition in concurrent code
 - **Transition**: To Ready when event completes (e.g., disk finishes read)
 
+<!-- TOC --><a name="extended-states-in-some-operating-systems"></a>
+
 #### Extended States (in some operating systems)
 
 | State          | Meaning                                            | Typical Use Case                |
@@ -229,6 +924,8 @@ A process exists in one of three primary states at any moment:
 | **Embryo/New** | Process being created, not yet runnable            | During `fork()` setup           |
 | **Zombie**     | Process exited but parent hasn't called `wait()`   | Parent delayed in cleanup       |
 | **Sleeping**   | Process blocked and temporarily not checking event | Long-term waits in some kernels |
+
+<!-- TOC --><a name="process-state-transition-diagram"></a>
 
 ### Process State Transition Diagram
 
@@ -250,6 +947,8 @@ A process exists in one of three primary states at any moment:
        └──────────────────────────────┘
 ```
 
+<!-- TOC --><a name="scenario-process-execution-with-cpu-only-workload"></a>
+
 ### Scenario: Process Execution with CPU-Only Workload
 
 Two processes, each performing pure CPU computation (no I/O):
@@ -268,6 +967,8 @@ Time  Process 0    Process 1    Notes
 ```
 
 **Scheduler Decision**: After Process 0 completes, Process 1 is the only ready process, so it begins execution.
+
+<!-- TOC --><a name="scenario-process-execution-with-io-blocking"></a>
 
 ### Scenario: Process Execution with I/O Blocking
 
@@ -295,9 +996,13 @@ Time  Process 0    Process 1    Notes
 - **Optimization**: Context switch to Process 1, utilize otherwise wasted CPU time
 - **Resource Efficiency**: Improves CPU utilization by reducing idle cycles
 
+<!-- TOC --><a name="process-data-structures-the-kernel-process-table"></a>
+
 ### Process Data Structures: The Kernel Process Table
 
 The OS maintains a **process list** (or **task list**) containing metadata for every active process. Each entry is called a **Process Control Block (PCB)** or **process descriptor**.
+
+<!-- TOC --><a name="xv6-kernel-process-structure"></a>
 
 #### xv6 Kernel Process Structure
 
@@ -361,13 +1066,19 @@ This mechanism makes process switching transparent: a process has no special kno
 
 ---
 
+<!-- TOC --><a name="chapter-5-the-process-api-in-historical-context"></a>
+
 ## Chapter 5: The Process API in Historical Context
+
+<!-- TOC --><a name="the-era-of-multiprogramming"></a>
 
 ### The Era of Multiprogramming
 
 **Timeline**: 1960s–1970s
 
 The minicomputer era (e.g., DEC PDP family) made computers affordable for small organizations. This drove demand for **multiprogramming**: running multiple jobs simultaneously on shared hardware.
+
+<!-- TOC --><a name="the-core-problem"></a>
 
 #### The Core Problem
 
@@ -384,6 +1095,8 @@ Traditional Single-Job Execution:
 │ = 40% ▲ Wasteful!               │
 └─────────────────────────────────┘
 ```
+
+<!-- TOC --><a name="the-multiprogramming-solution"></a>
 
 #### The Multiprogramming Solution
 
@@ -408,7 +1121,11 @@ Multiplexed Execution:
 └─────────────────────────────────┘
 ```
 
+<!-- TOC --><a name="key-os-innovations-required-for-multiprogramming"></a>
+
 ### Key OS Innovations Required for Multiprogramming
+
+<!-- TOC --><a name="memory-protection"></a>
 
 #### Memory Protection
 
@@ -416,16 +1133,22 @@ Multiplexed Execution:
 - **Solution**: Hardware memory management unit (MMU) + virtual memory enforcement
 - **Impact**: Enables safe isolation of multiple programs
 
+<!-- TOC --><a name="interrupt-and-exception-handling"></a>
+
 #### Interrupt and Exception Handling
 
 - **Problem**: OS needs to regain CPU control from user processes
 - **Mechanism**: Hardware timer interrupts and exception traps
 - **Result**: OS kernel can pause any process and context-switch
 
+<!-- TOC --><a name="concurrent-access-control"></a>
+
 #### Concurrent Access Control
 
 - **Problem**: Multiple processes accessing shared hardware (I/O devices, locks) create race conditions
 - **Solution**: Semaphores, monitors, locks, condition variables (covered in later sections)
+
+<!-- TOC --><a name="the-unix-philosophy"></a>
 
 ### The UNIX Philosophy
 
@@ -441,7 +1164,11 @@ This philosophy survives in modern systems: Linux, macOS (UNIX-based), and moder
 
 ---
 
+<!-- TOC --><a name="chapter-6-mechanismslimited-direct-execution"></a>
+
 ## Chapter 6: Mechanisms—Limited Direct Execution
+
+<!-- TOC --><a name="the-core-challenge-running-user-programs-safely-and-efficiently"></a>
 
 ### The Core Challenge: Running User Programs Safely and Efficiently
 
@@ -460,9 +1187,13 @@ EFFICIENCY          vs.        SAFETY & CONTROL
 **Direct Execution**: Let programs run directly on the CPU (fast)
 **Limited**: But restrict what they can do (safe)
 
+<!-- TOC --><a name="the-dual-mode-execution-model"></a>
+
 ### The Dual-Mode Execution Model
 
 Modern CPUs provide two execution modes:
+
+<!-- TOC --><a name="user-mode"></a>
 
 #### User Mode
 
@@ -475,6 +1206,8 @@ Modern CPUs provide two execution modes:
   - Halt the CPU
 - **Purpose**: Isolate user processes; prevent them from harming each other or OS
 
+<!-- TOC --><a name="kernel-mode-supervisor-mode"></a>
+
 #### Kernel Mode (Supervisor Mode)
 
 - **Permissions Granted**:
@@ -485,7 +1218,11 @@ Modern CPUs provide two execution modes:
 - **Owner**: Operating system kernel only
 - **Purpose**: Control system resources and manage user processes
 
+<!-- TOC --><a name="transitioning-between-modes"></a>
+
 ### Transitioning Between Modes
+
+<!-- TOC --><a name="user-mode-kernel-mode-system-call"></a>
 
 #### User Mode → Kernel Mode: System Call
 
@@ -515,6 +1252,8 @@ User Process:                   Kernel:
 - OS kernel handles request
 - Returns control to user process with result
 
+<!-- TOC --><a name="kernel-mode-user-mode-return-from-system-call"></a>
+
 #### Kernel Mode → User Mode: Return from System Call
 
 After the kernel completes a system call:
@@ -523,6 +1262,8 @@ After the kernel completes a system call:
 2. **Context restored**: User process's registers and state
 3. **Control transferred**: Program counter set to next instruction after syscall
 4. **Resume**: User process executes as if nothing special happened
+
+<!-- TOC --><a name="context-switching-saving-and-restoring-process-state"></a>
 
 ### Context Switching: Saving and Restoring Process State
 
@@ -566,6 +1307,8 @@ restore_register_context(next_process.context);
 // with next process's instructions from saved pc (eip)
 ```
 
+<!-- TOC --><a name="processor-timer-interrupt-enforcing-time-multiplexing"></a>
+
 ### Processor Timer Interrupt: Enforcing Time Multiplexing
 
 **Problem**: A runaway process (infinite loop) could monopolize the CPU, starving other processes
@@ -602,7 +1345,11 @@ Every 10ms (during user process execution):
 
 This **timer interrupt** is involuntary—the user process cannot prevent it. It guarantees the OS regains control periodically, enabling fairness and preventing starvation.
 
+<!-- TOC --><a name="io-operations-blocking-and-non-blocking"></a>
+
 ### I/O Operations: Blocking and Non-Blocking
+
+<!-- TOC --><a name="blocking-io-traditional-model"></a>
 
 #### Blocking I/O (Traditional Model)
 
@@ -632,7 +1379,11 @@ Process requests disk read:
 
 ---
 
+<!-- TOC --><a name="cpu-virtualization-demonstration-code-analysis"></a>
+
 ### CPU Virtualization Demonstration: Code Analysis
+
+<!-- TOC --><a name="example-1-single-process-cpu-usage-cpuc"></a>
 
 #### Example 1: Single-Process CPU Usage (cpu.c)
 
@@ -685,6 +1436,8 @@ A
 - Process resumes execution
 
 ---
+
+<!-- TOC --><a name="example-2-demonstrating-cpu-virtualization-with-multiple-processes"></a>
 
 #### Example 2: Demonstrating CPU Virtualization with Multiple Processes
 
@@ -739,6 +1492,8 @@ Process A: "I'm running continuously..."
 5. Process resumes execution unaware of being paused
 
 ---
+
+<!-- TOC --><a name="example-3-memory-virtualization-demonstration-memc"></a>
 
 #### Example 3: Memory Virtualization Demonstration (mem.c)
 
@@ -859,7 +1614,11 @@ Result: Both processes think they're at 0x200000,
 
 ---
 
+<!-- TOC --><a name="concurrency-introduction-the-race-condition-problem"></a>
+
 ### Concurrency Introduction: The Race Condition Problem
+
+<!-- TOC --><a name="multi-threaded-counter-increment-example-threadsc"></a>
 
 #### Multi-threaded Counter Increment Example (threads.c)
 
@@ -990,7 +1749,11 @@ This is **the core concurrency problem** that requires synchronization primitive
 
 ---
 
+<!-- TOC --><a name="key-takeaways"></a>
+
 ## Key Takeaways
+
+<!-- TOC --><a name="operating-system-fundamentals"></a>
 
 #### Operating System Fundamentals
 
@@ -998,6 +1761,8 @@ This is **the core concurrency problem** that requires synchronization primitive
 - The OS **virtualizes resources** (CPU, memory, disk) through mechanisms and policies
 - **Virtualization** creates the illusion of private resources (e.g., infinite virtual CPUs, private memory address spaces)
 - **Resource management** ensures fair, efficient sharing of physical hardware among competing processes
+
+<!-- TOC --><a name="the-process-abstraction"></a>
 
 #### The Process Abstraction
 
@@ -1007,6 +1772,8 @@ This is **the core concurrency problem** that requires synchronization primitive
 - The **process list** data structure tracks all active processes; the scheduler uses this to make policy decisions
 - **Process isolation** (via virtual memory and mode bits) prevents buggy/malicious processes from harming others
 
+<!-- TOC --><a name="limited-direct-execution"></a>
+
 #### Limited Direct Execution
 
 - **Dual-mode CPU execution** (user/kernel mode) enforces hardware-level restrictions on what processes can do
@@ -1014,6 +1781,8 @@ This is **the core concurrency problem** that requires synchronization primitive
 - **Context switching** saves/restores process state, enabling multiprogramming; **timer interrupts** force periodic context switches
 - **I/O operations** cause processes to block; scheduler uses idle time to run other processes, improving CPU utilization
 - **Virtual memory** (address translation) gives each process its own address space; physical memory is multiplexed
+
+<!-- TOC --><a name="concurrency-challenges"></a>
 
 #### Concurrency Challenges
 
@@ -1023,6 +1792,8 @@ This is **the core concurrency problem** that requires synchronization primitive
 - Resolution requires **synchronization primitives** (locks, semaphores) to enforce mutual exclusion on critical sections
 
 ---
+
+<!-- TOC --><a name="important-terms"></a>
 
 ## Important Terms
 
@@ -1067,19 +1838,29 @@ This is **the core concurrency problem** that requires synchronization primitive
 
 **End of Study Guide—Chapters 3–6**
 
+<!-- TOC --><a name="operating-systems-process-scheduling-and-virtualization-study-guide"></a>
+
 # Operating Systems: Process Scheduling and Virtualization Study Guide
 
 A comprehensive technical guide to understanding operating system fundamentals, with focus on process management, CPU virtualization, and scheduling policies.
 
 ---
 
+<!-- TOC --><a name="chapter-1-interlude-the-process-api"></a>
+
 ## Chapter 1: Interlude - The Process API
+
+<!-- TOC --><a name="overview"></a>
 
 ### Overview
 
 The Process API provides the fundamental mechanisms through which user programs create, manage, and terminate processes. The design of these APIs directly impacts how applications interact with the operating system kernel. In UNIX systems, two system calls form the core of process creation: `fork()` and `exec()`.
 
+<!-- TOC --><a name="the-fork-system-call"></a>
+
 ### The fork() System Call
+
+<!-- TOC --><a name="purpose-and-mechanism"></a>
 
 #### Purpose and Mechanism
 
@@ -1119,11 +1900,17 @@ if (rc < 0) {
 4. OS returns control to both processes via return-from-trap instruction
 5. Each process resumes from the same instruction following `fork()`
 
+<!-- TOC --><a name="why-fork-and-exec-are-separate"></a>
+
 #### Why fork() and exec() Are Separate
 
 A key insight in UNIX design is the **separation of concerns**: `fork()` creates a new process, while `exec()` replaces that process's program with an entirely different one. This design enables shell functionality and interprocess features.
 
+<!-- TOC --><a name="the-exec-family-of-system-calls"></a>
+
 ### The exec() Family of System Calls
+
+<!-- TOC --><a name="purpose-and-mechanism-1"></a>
 
 #### Purpose and Mechanism
 
@@ -1156,6 +1943,8 @@ fprintf(stderr, "exec() failed\n");
 5. OS initializes stack with command-line arguments (argv)
 6. OS initializes registers and jumps to new program's entry point
 
+<!-- TOC --><a name="common-exec-variants"></a>
+
 #### Common exec() Variants
 
 | Function   | Argument Format               | Path Lookup          |
@@ -1166,6 +1955,8 @@ fprintf(stderr, "exec() failed\n");
 | `execv()`  | Array of arguments            | No                   |
 | `execvp()` | Array of arguments            | Yes (searches $PATH) |
 | `execve()` | Array + environment variables | No                   |
+
+<!-- TOC --><a name="practical-pattern-fork-exec"></a>
 
 ### Practical Pattern: fork() + exec()
 
@@ -1230,6 +2021,8 @@ wait() returns                   Child terminated
 Parent continues
 ```
 
+<!-- TOC --><a name="advanced-technique-inputoutput-redirection"></a>
+
 ### Advanced Technique: Input/Output Redirection
 
 The separation of `fork()` and `exec()` enables powerful shell features like output redirection. Between `fork()` and `exec()`, the child can modify its environment without affecting the parent.
@@ -1289,7 +2082,11 @@ FD 1          → /home/user/file.txt
 FD 2 (stderr) → /dev/stderr
 ```
 
+<!-- TOC --><a name="the-wait-system-call"></a>
+
 ### The wait() System Call
+
+<!-- TOC --><a name="purpose-and-mechanism-2"></a>
 
 #### Purpose and Mechanism
 
@@ -1317,6 +2114,8 @@ pid_t wait(int *status);
 5. OS transitions parent back to **ready state**
 6. Parent resumes execution after `wait()` returns
 
+<!-- TOC --><a name="understanding-process-ids-pids"></a>
+
 ### Understanding Process IDs (PIDs)
 
 Each process has a unique identifier:
@@ -1332,6 +2131,8 @@ pid_t getppid();  // Get parent's PID
 - PID 1 is `init` (or `systemd` in modern systems), the first user process
 - The kernel starts processes with low PIDs
 - PIDs recycle after reaching maximum value
+
+<!-- TOC --><a name="process-states-and-transitions"></a>
 
 ### Process States and Transitions
 
@@ -1368,6 +2169,8 @@ pid_t getppid();  // Get parent's PID
                   └──────────────────┘
 ```
 
+<!-- TOC --><a name="process-control-and-signals"></a>
+
 ### Process Control and Signals
 
 Beyond `fork()`, `exec()`, and `wait()`, the UNIX API provides **signals** for external process communication:
@@ -1395,6 +2198,8 @@ signal(SIGINT, handle_signal);  // Catch Ctrl+C
 
 ---
 
+<!-- TOC --><a name="key-takeaways-1"></a>
+
 #### Key Takeaways
 
 - `fork()` creates an identical child process; returns different values to parent and child
@@ -1402,6 +2207,8 @@ signal(SIGINT, handle_signal);  // Catch Ctrl+C
 - Separation of `fork()` and `exec()` enables shell redirection, pipes, and complex process management
 - `wait()` synchronizes parent and child execution, allowing parents to collect exit status
 - Signals provide asynchronous communication to processes from the OS
+
+<!-- TOC --><a name="important-terms-1"></a>
 
 #### Important Terms
 
@@ -1420,7 +2227,11 @@ signal(SIGINT, handle_signal);  // Catch Ctrl+C
 
 ---
 
+<!-- TOC --><a name="chapter-2-mechanism-limited-direct-execution"></a>
+
 ## Chapter 2: Mechanism - Limited Direct Execution
+
+<!-- TOC --><a name="overview-1"></a>
 
 ### Overview
 
@@ -1431,6 +2242,8 @@ The CPU is a shared resource, and the OS must balance:
 3. **Isolation**: Preventing processes from interfering with each other or the kernel
 
 Limited Direct Execution (LDE) solves this through hardware support for **privilege levels** and **protected control transfer**.
+
+<!-- TOC --><a name="hardware-privilege-levels"></a>
 
 ### Hardware Privilege Levels
 
@@ -1443,9 +2256,13 @@ Modern CPUs operate in two modes:
 
 Attempting privileged operations in user mode causes a **hardware exception**, which traps into the OS.
 
+<!-- TOC --><a name="the-limited-direct-execution-protocol"></a>
+
 ### The Limited Direct Execution Protocol
 
 The OS uses a three-phase protocol to safely execute user programs:
+
+<!-- TOC --><a name="phase-1-boot-time-setup-privileged"></a>
 
 #### Phase 1: Boot-Time Setup (Privileged)
 
@@ -1474,6 +2291,8 @@ Trap Table Entry 1: handle_invalid_memory_access()
 Trap Table Entry 60: handle_system_call()
 Trap Table Entry 64 (timer): handle_timer_interrupt()
 ```
+
+<!-- TOC --><a name="phase-2-runtime-execution-limited-direct"></a>
 
 #### Phase 2: Runtime Execution (Limited Direct)
 
@@ -1556,7 +2375,11 @@ Kernel Stack
 └──────────────────────────┘
 ```
 
+<!-- TOC --><a name="system-calls-protected-transitions-into-the-kernel"></a>
+
 ### System Calls: Protected Transitions into the Kernel
+
+<!-- TOC --><a name="the-system-call-mechanism"></a>
 
 #### The System Call Mechanism
 
@@ -1617,6 +2440,8 @@ int fd = open("/home/user/file.txt", O_RDONLY);
    - System call return value is in designated register
    - User program checks for errors and continues
 
+<!-- TOC --><a name="system-call-security"></a>
+
 #### System Call Security
 
 The indirection through system call numbers provides protection:
@@ -1639,7 +2464,11 @@ trap                 // Controlled entry
 // OS validates and executes only the intended function
 ```
 
+<!-- TOC --><a name="managing-timer-interrupts-regaining-control"></a>
+
 ### Managing Timer Interrupts: Regaining Control
+
+<!-- TOC --><a name="the-problem"></a>
 
 #### The Problem
 
@@ -1657,6 +2486,8 @@ Problem Scenario:
   └─→ OS is now stuck: cannot schedule other processes,
       handle I/O, or manage system
 ```
+
+<!-- TOC --><a name="solution-timer-interrupts"></a>
 
 #### Solution: Timer Interrupts
 
@@ -1709,11 +2540,17 @@ Return to User Mode:
 
 **Critical Insight**: The timer interrupt is the mechanism that prevents a single runaway process from monopolizing the CPU.
 
+<!-- TOC --><a name="context-switching"></a>
+
 ### Context Switching
+
+<!-- TOC --><a name="definition"></a>
 
 #### Definition
 
 A **context switch** is the act of stopping one process and starting another. The "context" is the complete process state: registers, PC, and memory mappings.
+
+<!-- TOC --><a name="context-switch-overhead"></a>
 
 #### Context Switch Overhead
 
@@ -1744,6 +2581,8 @@ struct ProcessContext {
 
 **Measurement**: On modern systems, a context switch typically costs 1-10 microseconds, depending on cache behavior.
 
+<!-- TOC --><a name="cooperative-vs-non-cooperative-scheduling"></a>
+
 #### Cooperative vs. Non-Cooperative Scheduling
 
 **Cooperative Approach** (old systems like Macintosh, Xerox Alto):
@@ -1768,6 +2607,8 @@ OS uses timer interrupt to force control:
 
 ---
 
+<!-- TOC --><a name="key-takeaways-2"></a>
+
 #### Key Takeaways
 
 - Limited Direct Execution achieves performance by running processes directly on hardware, while maintaining control through hardware mechanisms
@@ -1775,6 +2616,8 @@ OS uses timer interrupt to force control:
 - System call numbers protect the OS by preventing user programs from jumping to arbitrary kernel addresses
 - Timer interrupts allow the OS to regain control from runaway processes
 - Context switching stores and restores complete process state, but has measurable overhead
+
+<!-- TOC --><a name="important-terms-2"></a>
 
 #### Important Terms
 
@@ -1794,7 +2637,11 @@ OS uses timer interrupt to force control:
 
 ---
 
+<!-- TOC --><a name="chapter-3-scheduling-introduction"></a>
+
 ## Chapter 3: Scheduling - Introduction
+
+<!-- TOC --><a name="overview-2"></a>
 
 ### Overview
 
@@ -1806,6 +2653,8 @@ Scheduling policies directly impact:
 - **Response time**: How quickly interactive jobs respond to user input
 - **Fairness**: Whether all processes receive equal CPU time
 - **System throughput**: How many jobs complete per unit time
+
+<!-- TOC --><a name="workload-assumptions"></a>
 
 ### Workload Assumptions
 
@@ -1827,9 +2676,13 @@ Before evaluating policies, we establish simplifying assumptions about the proce
 
 As we progress, we'll relax these assumptions one by one.
 
+<!-- TOC --><a name="scheduling-metrics"></a>
+
 ### Scheduling Metrics
 
 A **scheduling metric** is a quantitative measure used to evaluate scheduling policies.
+
+<!-- TOC --><a name="primary-metric-turnaround-time"></a>
 
 #### Primary Metric: Turnaround Time
 
@@ -1861,6 +2714,8 @@ C: 30 - 0 = 30 seconds
 Average turnaround: (10 + 20 + 30) / 3 = 20 seconds
 ```
 
+<!-- TOC --><a name="secondary-metric-response-time"></a>
+
 #### Secondary Metric: Response Time
 
 In systems with interactive users, another metric matters:
@@ -1879,7 +2734,11 @@ T_response = 20 - 0 = 20 seconds
 
 **Problem**: Optimizing for turnaround time (via FIFO) often harms response time (long jobs block interactive jobs).
 
+<!-- TOC --><a name="first-in-first-out-fifo-scheduling"></a>
+
 ### First In, First Out (FIFO) Scheduling
+
+<!-- TOC --><a name="algorithm-description"></a>
 
 #### Algorithm Description
 
@@ -1889,6 +2748,8 @@ FIFO is the simplest scheduling policy:
 2. When CPU becomes available, select process at **front of queue**
 3. When process completes, remove from queue; next process starts
 4. New arriving processes join **end of queue**
+
+<!-- TOC --><a name="fifo-pseudocode"></a>
 
 #### FIFO Pseudocode
 
@@ -1915,6 +2776,8 @@ void new_process_arrives(Process *p) {
 }
 ```
 
+<!-- TOC --><a name="fifo-performance-under-ideal-assumptions"></a>
+
 #### FIFO Performance Under Ideal Assumptions
 
 **Scenario: Three equal-length jobs (10 seconds each)**
@@ -1932,6 +2795,8 @@ Results:
 ```
 
 **FIFO is optimal** when all jobs have equal runtime (given our assumptions).
+
+<!-- TOC --><a name="fifo-performance-impact-of-relaxing-assumption-1"></a>
 
 #### FIFO Performance: Impact of Relaxing Assumption 1
 
@@ -1962,7 +2827,11 @@ before starting. This is the "convoy effect."
 
 **The Convoy Effect**: Short jobs get stuck behind a long job, similar to a grocery store line where a customer with many items blocks all others.
 
+<!-- TOC --><a name="shortest-job-first-sjf-scheduling"></a>
+
 ### Shortest Job First (SJF) Scheduling
+
+<!-- TOC --><a name="algorithm-description-1"></a>
 
 #### Algorithm Description
 
@@ -1972,6 +2841,8 @@ To address the convoy effect, SJF runs jobs in order of runtime:
 2. Run that job to completion
 3. Repeat
 
+<!-- TOC --><a name="why-sjf-works"></a>
+
 #### Why SJF Works
 
 By running short jobs first:
@@ -1979,6 +2850,8 @@ By running short jobs first:
 - Short jobs complete quickly
 - Long jobs don't block system
 - Average turnaround improves dramatically
+
+<!-- TOC --><a name="sjf-performance-same-scenario"></a>
 
 #### SJF Performance: Same Scenario
 
@@ -2000,13 +2873,19 @@ Results:
 
 **Mathematical Proof**: Given our assumptions, SJF minimizes average turnaround time (proof omitted in systems course).
 
+<!-- TOC --><a name="sjf-limitation-unknown-job-lengths"></a>
+
 #### SJF Limitation: Unknown Job Lengths
 
 In practice, the OS doesn't know job runtimes in advance. Scheduling algorithms like SJF (or STCF) would require **omniscience** — not available in real systems.
 
 **Hypothesis**: While imperfect, an OS can **predict** future job behavior based on past behavior (central principle of MLFQ, discussed later).
 
+<!-- TOC --><a name="sjf-with-late-arrivals"></a>
+
 ### SJF with Late Arrivals
+
+<!-- TOC --><a name="new-assumption-jobs-arrive-at-different-times"></a>
 
 #### New Assumption: Jobs Arrive at Different Times
 
@@ -2040,7 +2919,11 @@ SJF knows they're shorter!
 
 **Root Cause**: Non-preemptive scheduling cannot interrupt A once started.
 
+<!-- TOC --><a name="shortest-time-to-completion-first-stcf"></a>
+
 ### Shortest Time-to-Completion First (STCF)
+
+<!-- TOC --><a name="algorithm-description-2"></a>
 
 #### Algorithm Description
 
@@ -2050,6 +2933,8 @@ STCF solves the late-arrival problem by allowing **preemption**:
 2. If new job is shorter, **preempt** current job and run new job
 3. When job completes, switch to next shortest remaining job
 
+<!-- TOC --><a name="stcf-vs-sjf"></a>
+
 #### STCF vs. SJF
 
 | Aspect                     | SJF                               | STCF                           |
@@ -2058,6 +2943,8 @@ STCF solves the late-arrival problem by allowing **preemption**:
 | Can interrupt running job? | No                                | Yes                            |
 | On new job arrival         | Ignore (keep current job running) | Compare remaining times        |
 | Optimal for?               | All jobs arrive together          | Jobs arrive at different times |
+
+<!-- TOC --><a name="stcf-performance-same-late-arrival-scenario"></a>
 
 #### STCF Performance: Same Late-Arrival Scenario
 
@@ -2091,6 +2978,8 @@ Results:
 
 ---
 
+<!-- TOC --><a name="key-takeaways-3"></a>
+
 #### Key Takeaways
 
 - Turnaround time measures how quickly jobs complete
@@ -2098,6 +2987,8 @@ Results:
 - SJF minimizes average turnaround but requires knowing job lengths
 - STCF (preemptive SJF) handles late-arriving jobs optimally but still needs job length predictions
 - Real systems must predict job behavior to achieve SJF-like performance
+
+<!-- TOC --><a name="important-terms-3"></a>
 
 #### Important Terms
 
@@ -2116,7 +3007,11 @@ Results:
 
 ---
 
+<!-- TOC --><a name="chapter-4-scheduling-the-multi-level-feedback-queue-mlfq"></a>
+
 ## Chapter 4: Scheduling - The Multi-Level Feedback Queue (MLFQ)
+
+<!-- TOC --><a name="overview-3"></a>
 
 ### Overview
 
@@ -2127,6 +3022,8 @@ The Multi-Level Feedback Queue (MLFQ) is one of the most important scheduling al
 1. Optimize turnaround time (achieved by running short jobs first)
 2. Minimize response time for interactive users
 3. Do all this **without knowing job lengths in advance**
+
+<!-- TOC --><a name="the-fundamental-challenge"></a>
 
 ### The Fundamental Challenge
 
@@ -2139,7 +3036,11 @@ Ideal Requirements (Conflicting!)
 
 **Key Insight**: MLFQ learns job characteristics by **observing runtime behavior** and adjusting priorities accordingly.
 
+<!-- TOC --><a name="mlfq-basic-rules"></a>
+
 ### MLFQ: Basic Rules
+
+<!-- TOC --><a name="rule-1-priority-based-selection"></a>
 
 #### Rule 1: Priority-Based Selection
 
@@ -2171,6 +3072,8 @@ Priority Queue Structure:
                     │ ProcessE   │ ProcessF   │
 ```
 
+<!-- TOC --><a name="rule-2-round-robin-among-equal-priorities"></a>
+
 #### Rule 2: Round-Robin Among Equal Priorities
 
 ```
@@ -2193,9 +3096,13 @@ Process* schedule() {
 }
 ```
 
+<!-- TOC --><a name="how-mlfq-adjusts-priorities"></a>
+
 ### How MLFQ Adjusts Priorities
 
 The key to MLFQ is **dynamic priority adjustment** based on observed behavior.
+
+<!-- TOC --><a name="rule-3-new-jobs-enter-at-highest-priority"></a>
 
 #### Rule 3: New Jobs Enter at Highest Priority
 
@@ -2210,6 +3117,8 @@ When a new process enters the system:
 - If it's a long batch job, it will be detected and moved down
 - Initially treat all jobs as potentially interactive
 
+<!-- TOC --><a name="rule-4a-using-full-time-slice-lower-priority"></a>
+
 #### Rule 4a: Using Full Time Slice → Lower Priority
 
 ```
@@ -2223,6 +3132,8 @@ If a process uses entire time slice (time quantum):
 - CPU-intensive jobs should have lower priority
 - Keep high priority for jobs that yield CPU
 
+<!-- TOC --><a name="rule-4b-yield-cpu-early-keep-priority"></a>
+
 #### Rule 4b: Yield CPU Early → Keep Priority
 
 ```
@@ -2235,6 +3146,8 @@ If a process yields CPU before time slice ends:
 - Process yielded CPU (waiting for I/O) → likely interactive
 - Interactive jobs should stay at high priority
 - Example: keyboard input, mouse click
+
+<!-- TOC --><a name="example-1-long-running-batch-job"></a>
 
 #### Example 1: Long-Running Batch Job
 
@@ -2280,6 +3193,8 @@ Priority
 ▓ = Process running   ░ = Process not running
 ```
 
+<!-- TOC --><a name="example-2-short-interactive-job-arrives"></a>
+
 #### Example 2: Short Interactive Job Arrives
 
 ```
@@ -2319,9 +3234,13 @@ Q0: ▓AAAA ▓AAAA A▓AAA AA▓AAA   (A gets CPU only when Q2 empty)
 Time: 0 10 20 30 40 ...
 ```
 
+<!-- TOC --><a name="problems-with-basic-mlfq"></a>
+
 ### Problems with Basic MLFQ
 
 The initial MLFQ rules have three critical flaws:
+
+<!-- TOC --><a name="problem-1-starvation"></a>
 
 #### Problem 1: Starvation
 
@@ -2338,6 +3257,8 @@ They consume all CPU time.
 Job A on Q0 never gets CPU time.
 Result: A starves → never completes
 ```
+
+<!-- TOC --><a name="problem-2-gaming-the-scheduler"></a>
 
 #### Problem 2: Gaming the Scheduler
 
@@ -2358,6 +3279,8 @@ while(1) {
 
 **Effect**: Malicious process stays at high priority despite being CPU-intensive, essentially monopolizing CPU.
 
+<!-- TOC --><a name="problem-3-behavior-changes"></a>
+
 #### Problem 3: Behavior Changes
 
 **Scenario**: Process changes from batch to interactive
@@ -2373,9 +3296,13 @@ Phase 2: Process changes to I/O-intensive (t=31s+)
 Result: Process gets low priority despite being interactive
 ```
 
+<!-- TOC --><a name="mlfq-improved-rule-1-priority-boost"></a>
+
 ### MLFQ: Improved Rule 1 - Priority Boost
 
 To solve starvation and handle behavior changes, add periodic "reset":
+
+<!-- TOC --><a name="rule-5-periodic-priority-boost"></a>
 
 #### Rule 5: Periodic Priority Boost
 
@@ -2408,6 +3335,8 @@ Q0: (gets reset periodically)
 Result: A makes regular progress
 ```
 
+<!-- TOC --><a name="problem-voodoo-constants"></a>
+
 #### Problem: "Voodoo Constants"
 
 The question arises: **What should S be?**
@@ -2420,9 +3349,13 @@ John Ousterhout called such parameters "voodoo constants" — they seem to requi
 
 This is a real problem in MLFQ tuning; there's no perfect value.
 
+<!-- TOC --><a name="mlfq-improved-rule-2-better-accounting"></a>
+
 ### MLFQ: Improved Rule 2 - Better Accounting
 
 To prevent gaming, improve how time is accounted:
+
+<!-- TOC --><a name="rule-4-revised-track-cpu-use-in-each-priority-level"></a>
 
 #### Rule 4 Revised: Track CPU Use in Each Priority Level
 
@@ -2467,6 +3400,8 @@ Rationale:
 - Interactive jobs rarely reach low priority (and if they do,
   they'll be boosted back up eventually)
 ```
+
+<!-- TOC --><a name="complete-mlfq-algorithm-summary"></a>
 
 ### Complete MLFQ Algorithm Summary
 
@@ -2541,6 +3476,8 @@ void mlfq_scheduler() {
 }
 ```
 
+<!-- TOC --><a name="mlfq-in-practice"></a>
+
 ### MLFQ in Practice
 
 **Linux CFS (Completely Fair Scheduler)**: Modern Linux dropped MLFQ in favor of the Completely Fair Scheduler, which attempts to give all processes fair CPU allocation using different mechanisms.
@@ -2551,6 +3488,8 @@ void mlfq_scheduler() {
 
 ---
 
+<!-- TOC --><a name="key-takeaways-4"></a>
+
 #### Key Takeaways
 
 - MLFQ learns job characteristics by observing behavior (CPU vs. I/O patterns)
@@ -2558,6 +3497,8 @@ void mlfq_scheduler() {
 - Demotion (via time quantum accounting) prevents gaming and prioritizes interactive jobs
 - MLFQ represents a practical balance between knowing nothing and omniscience
 - Trade-off: System must be tuned; optimal parameters depend on workload
+
+<!-- TOC --><a name="important-terms-4"></a>
 
 #### Important Terms
 
@@ -2576,7 +3517,11 @@ void mlfq_scheduler() {
 
 ---
 
+<!-- TOC --><a name="chapter-5-scheduling-proportional-share-lottery-scheduling"></a>
+
 ## Chapter 5: Scheduling - Proportional Share (Lottery Scheduling)
+
+<!-- TOC --><a name="overview-4"></a>
 
 ### Overview
 
@@ -2590,7 +3535,11 @@ An alternative approach: **Proportional Share (Lottery Scheduling)** ensures eac
 
 **Key Principle**: Rather than trying to be "fair" through complex rules, lottery scheduling is mathematically fair: each process's CPU share equals its ticket percentage.
 
+<!-- TOC --><a name="the-lottery-scheduling-concept"></a>
+
 ### The Lottery Scheduling Concept
+
+<!-- TOC --><a name="basic-idea-tickets-represent-cpu-share"></a>
 
 #### Basic Idea: Tickets Represent CPU Share
 
@@ -2614,6 +3563,8 @@ Probability each gets selected:
 - C: 250/400 = 62.5%
 ```
 
+<!-- TOC --><a name="why-it-works-law-of-large-numbers"></a>
+
 #### Why It Works: Law of Large Numbers
 
 Individual scheduling decisions are random, but over many decisions, each process gets approximately its ticket fraction of CPU:
@@ -2632,7 +3583,11 @@ Over 1,000,000 scheduling decisions:
 (Closer to exact ticket fraction)
 ```
 
+<!-- TOC --><a name="lottery-scheduling-implementation"></a>
+
 ### Lottery Scheduling Implementation
+
+<!-- TOC --><a name="the-core-algorithm"></a>
 
 #### The Core Algorithm
 
@@ -2678,6 +3633,8 @@ i=2: counter = 150 +250 = 400; is 400 > 300? Yes
 Result: C runs this time slice
 ```
 
+<!-- TOC --><a name="time-complexity"></a>
+
 #### Time Complexity
 
 - **Picking random number**: O(1)
@@ -2686,9 +3643,13 @@ Result: C runs this time slice
 
 This is reasonable even for systems with hundreds of processes.
 
+<!-- TOC --><a name="ticket-mechanisms-manipulating-shares"></a>
+
 ### Ticket Mechanisms: Manipulating Shares
 
 Lottery scheduling is flexible; processes can manipulate tickets:
+
+<!-- TOC --><a name="ticket-currency-delegation-within-user-domain"></a>
 
 #### Ticket Currency: Delegation Within User Domain
 
@@ -2726,6 +3687,8 @@ Result: A maintains 50% CPU (split between jobs),
         B maintains 50% CPU (one job)
 ```
 
+<!-- TOC --><a name="ticket-transfer-temporary-delegation"></a>
+
 #### Ticket Transfer: Temporary Delegation
 
 **Scenario**: Client-server system where client blocks waiting for server
@@ -2754,6 +3717,8 @@ tickets_return(server_pid);    // Server returns tickets
 
 **Benefit**: Server can process request quickly, unblocking client faster.
 
+<!-- TOC --><a name="ticket-inflation-temporary-priority-increase"></a>
+
 #### Ticket Inflation: Temporary Priority Increase
 
 In **cooperative** environments (processes trust each other), a process can temporarily increase its tickets:
@@ -2767,7 +3732,11 @@ current_tickets /= 2;    // Return to normal
 
 **Risk**: In adversarial environment (untrusted processes), could monopolize CPU by inflating infinitely.
 
+<!-- TOC --><a name="lottery-scheduling-advantages-and-disadvantages"></a>
+
 ### Lottery Scheduling: Advantages and Disadvantages
+
+<!-- TOC --><a name="advantages"></a>
 
 #### Advantages
 
@@ -2779,6 +3748,8 @@ current_tickets /= 2;    // Return to normal
 | **No starvation** | Every ticket-holder gets some CPU, eventually                     |
 | **Responsive**    | Short jobs with few tickets still run (won't starve)              |
 
+<!-- TOC --><a name="disadvantages"></a>
+
 #### Disadvantages
 
 | Disadvantage                      | Explanation                                                     |
@@ -2789,11 +3760,15 @@ current_tickets /= 2;    // Return to normal
 | **Ticket allocation complexity**  | Deciding initial ticket allocation is non-obvious               |
 | **Efficiency assumption**         | Assumes processes don't care getting exact share vs. fair share |
 
+<!-- TOC --><a name="stride-scheduling-deterministic-alternative"></a>
+
 ### Stride Scheduling: Deterministic Alternative
 
 **Limitation of Lottery**: Randomness means short-term CPU allocation is unpredictable.
 
 **Stride Scheduling** provides deterministic proportional share:
+
+<!-- TOC --><a name="algorithm-concept"></a>
 
 #### Algorithm Concept
 
@@ -2834,6 +3809,8 @@ Process* stride_schedule() {
 }
 ```
 
+<!-- TOC --><a name="example-stride-scheduling"></a>
+
 #### Example: Stride Scheduling
 
 ```
@@ -2871,6 +3848,8 @@ CPU share: A gets 2/3, B gets 1/3
 Expected: A should get 100/150 = 2/3, B should get 50/150 = 1/3 ✓
 ```
 
+<!-- TOC --><a name="stride-vs-lottery"></a>
+
 #### Stride vs. Lottery
 
 | Aspect                    | Lottery                   | Stride                            |
@@ -2883,6 +3862,8 @@ Expected: A should get 100/150 = 2/3, B should get 50/150 = 1/3 ✓
 
 ---
 
+<!-- TOC --><a name="key-takeaways-5"></a>
+
 #### Key Takeaways
 
 - Lottery scheduling is alternative to priority-based scheduling
@@ -2890,6 +3871,8 @@ Expected: A should get 100/150 = 2/3, B should get 50/150 = 1/3 ✓
 - Ticket mechanisms (currency, transfer, inflation) provide flexibility
 - Stride scheduling improves on lottery with deterministic behavior
 - Trade-off: Proportional share simplicity vs. optimizing specific metrics
+
+<!-- TOC --><a name="important-terms-5"></a>
 
 #### Important Terms
 
@@ -2907,7 +3890,11 @@ Expected: A should get 100/150 = 2/3, B should get 50/150 = 1/3 ✓
 
 ---
 
+<!-- TOC --><a name="chapter-6-comprehensive-scheduling-algorithms-summary"></a>
+
 ## Chapter 6: Comprehensive Scheduling Algorithms Summary
+
+<!-- TOC --><a name="historical-timeline-and-evolution"></a>
 
 ### Historical Timeline and Evolution
 
@@ -2957,7 +3944,11 @@ Timeline of Scheduler Development:
 └─ Energy-aware scheduling (mobile, data centers)
 ```
 
+<!-- TOC --><a name="comprehensive-scheduling-algorithm-comparison"></a>
+
 ### Comprehensive Scheduling Algorithm Comparison
+
+<!-- TOC --><a name="feature-comparison-table"></a>
 
 #### Feature Comparison Table
 
@@ -2972,6 +3963,8 @@ Timeline of Scheduler Development:
 | Stride      | 1990s | ✓ Yes      | No                    | ○ Fair               | ○ Fair                         | No                         |
 | CFS (Linux) | 2007  | ✓ Yes      | No                    | ✓ Fair               | ✓ Fair                         | No                         |
 
+<!-- TOC --><a name="performance-metrics-comparison"></a>
+
 #### Performance Metrics Comparison
 
 | Algorithm   | Avg Turnaround              | Response Time       | Context Switches               | Fairness                       |
@@ -2984,6 +3977,8 @@ Timeline of Scheduler Development:
 | Lottery     | Fair                        | Fair                | Moderate                       | **Guaranteed** (probabilistic) |
 | Stride      | Fair                        | Fair                | Moderate                       | **Guaranteed** (deterministic) |
 | CFS         | Fair                        | Good                | Many (tracking small vruntime) | **Guaranteed** (proportional)  |
+
+<!-- TOC --><a name="complexity-analysis"></a>
 
 #### Complexity Analysis
 
@@ -2998,7 +3993,11 @@ Timeline of Scheduler Development:
 | Stride      | O(n)                        | O(n)             | Find minimum pass value                                 |
 | CFS         | O(log n)                    | O(n)             | Red-black tree of vruntime values                       |
 
+<!-- TOC --><a name="detailed-algorithm-specification"></a>
+
 ### Detailed Algorithm Specification
+
+<!-- TOC --><a name="fifo-first-in-first-out"></a>
 
 #### FIFO (First In, First Out)
 
@@ -3028,6 +4027,8 @@ Results: Avg turnaround = 110ms (high!)
 - Poor average turnaround with mixed workload
 
 ---
+
+<!-- TOC --><a name="sjf-shortest-job-first"></a>
 
 #### SJF (Shortest Job First)
 
@@ -3059,6 +4060,8 @@ Results: Avg turnaround = 50ms (much better!)
 - Starvation risk (long jobs starved by stream of short jobs)
 
 ---
+
+<!-- TOC --><a name="stcf-shortest-time-to-completion-first"></a>
 
 #### STCF (Shortest Time-to-Completion First)
 
@@ -3101,6 +4104,8 @@ Results: Avg turnaround = 50ms
 
 ---
 
+<!-- TOC --><a name="round-robin-rr"></a>
+
 #### Round-Robin (RR)
 
 **Best For**: Time-sharing systems, interactive workloads
@@ -3135,6 +4140,8 @@ CPU share: Each gets 1/3
 - Interactive jobs don't get better service than batch
 
 ---
+
+<!-- TOC --><a name="mlfq-multi-level-feedback-queue"></a>
 
 #### MLFQ (Multi-Level Feedback Queue)
 
@@ -3185,6 +4192,8 @@ Q0: []
 
 ---
 
+<!-- TOC --><a name="lottery-scheduling"></a>
+
 #### Lottery Scheduling
 
 **Best For**: Proportional CPU sharing; research/specialized systems
@@ -3223,6 +4232,8 @@ C runs ~62.5% (250/400)
 
 ---
 
+<!-- TOC --><a name="stride-scheduling"></a>
+
 #### Stride Scheduling
 
 **Best For**: Deterministic proportional sharing (research systems)
@@ -3256,6 +4267,8 @@ CPU share: A gets 2/3, B gets 1/3 (exact!)
 - Rarely used in practice
 
 ---
+
+<!-- TOC --><a name="cfs-completely-fair-scheduler-linux"></a>
 
 #### CFS (Completely Fair Scheduler, Linux)
 
@@ -3317,7 +4330,11 @@ Over 1000ms:
 
 ---
 
+<!-- TOC --><a name="modern-linux-approaches-v5x-v6x"></a>
+
 ### Modern Linux Approaches (v5.x - v6.x+)
+
+<!-- TOC --><a name="cfs-completely-fair-scheduler"></a>
 
 #### CFS (Completely Fair Scheduler)
 
@@ -3332,6 +4349,8 @@ Task with minimum vruntime gets CPU:
   vruntime < 10ms? Very likely picked
   vruntime >= others? Picked when others sleep
 ```
+
+<!-- TOC --><a name="auto-group-scheduling-cgroup-integration"></a>
 
 #### Auto Group Scheduling (cgroup integration)
 
@@ -3354,6 +4373,8 @@ With grouping:
   => More responsive!
 ```
 
+<!-- TOC --><a name="energy-aware-scheduling-sched_eas"></a>
+
 #### Energy-Aware Scheduling (SCHED_EAS)
 
 Modern extension: Consider **power consumption** and **thermal state**.
@@ -3375,6 +4396,8 @@ Interactive task → Use big core at high frequency
 Background task → Use little core at low frequency
 ```
 
+<!-- TOC --><a name="real-time-scheduling-sched_fifo-sched_rr"></a>
+
 #### Real-Time Scheduling (SCHED_FIFO, SCHED_RR)
 
 For hard real-time requirements:
@@ -3387,6 +4410,8 @@ Priorities:
 - Real-time tasks: 0-99 (fixed priority)
 - Normal tasks: 100-139 (CFS scheduling with priorities)
 ```
+
+<!-- TOC --><a name="deadline-scheduling-sched_deadline"></a>
 
 #### Deadline Scheduling (SCHED_DEADLINE)
 
@@ -3407,6 +4432,8 @@ struct sched_attr {
 
 ---
 
+<!-- TOC --><a name="practical-considerations-choosing-a-scheduler"></a>
+
 ### Practical Considerations: Choosing a Scheduler
 
 | Workload Type     | Recommended Algorithm         | Why                   |
@@ -3422,7 +4449,11 @@ struct sched_attr {
 
 ---
 
+<!-- TOC --><a name="scheduling-in-multi-core-systems"></a>
+
 ### Scheduling in Multi-Core Systems
+
+<!-- TOC --><a name="challenge-load-balancing"></a>
 
 #### Challenge: Load Balancing
 
@@ -3453,6 +4484,8 @@ Approach 3: Hierarchical (Linux)
 └─ Sophisticated balancing algorithm (considers distance, caches)
 ```
 
+<!-- TOC --><a name="numa-aware-scheduling-linux"></a>
+
 #### NUMA-Aware Scheduling (Linux)
 
 ```
@@ -3474,6 +4507,8 @@ CFS + NUMA:
 ```
 
 ---
+
+<!-- TOC --><a name="summary-the-evolution-of-fairness"></a>
 
 ### Summary: The Evolution of Fairness
 
@@ -3504,6 +4539,8 @@ Modern era (2000s+):
 
 ---
 
+<!-- TOC --><a name="key-insights-across-all-schedulers"></a>
+
 ### Key Insights Across All Schedulers
 
 1. **No perfect scheduler**: Every algorithm trades off something
@@ -3515,7 +4552,11 @@ Modern era (2000s+):
 
 ---
 
+<!-- TOC --><a name="master-takeaways-core-operating-systems-concepts"></a>
+
 ## Master Takeaways: Core Operating Systems Concepts
+
+<!-- TOC --><a name="process-management"></a>
 
 ### Process Management
 
@@ -3523,12 +4564,16 @@ Modern era (2000s+):
 - **Limited Direct Execution** balances performance (direct hardware) with control (traps, timers)
 - **System calls** are controlled entry points requiring explicit request numbers; not arbitrary jumps
 
+<!-- TOC --><a name="cpu-scheduling"></a>
+
 ### CPU Scheduling
 
 - **Metrics matter**: Turnaround time, response time, and fairness are often at odds
 - **Scheduling is adaptive**: Modern systems (MLFQ, CFS) predict future behavior from past
 - **No free lunch**: Every policy trades off one goal for another
 - **Hardware assists**: Timer interrupts, multiple CPUs, NUMA awareness directly impact scheduler design
+
+<!-- TOC --><a name="design-principles"></a>
 
 ### Design Principles
 
@@ -3542,6 +4587,8 @@ Modern era (2000s+):
 
 ---
 
+<!-- TOC --><a name="final-summary-and-references"></a>
+
 # Final Summary and References
 
 This study guide covers the foundational concepts of operating system process scheduling and virtualization. The progression from simple FIFO scheduling to sophisticated adaptive schedulers like MLFQ and modern Linux CFS demonstrates how operating systems evolve to balance multiple, often-competing goals:
@@ -3553,7 +4600,11 @@ This study guide covers the foundational concepts of operating system process sc
 
 Modern operating systems like Linux, macOS, and Windows use refined variations of these core algorithms, adapted for multi-core hardware, NUMA architectures, and specialized workloads (real-time, mobile, cloud).
 
+<!-- TOC --><a name="memory-virtualization-a-comprehensive-engineering-guide"></a>
+
 # Memory Virtualization: A Comprehensive Engineering Guide
+
+<!-- TOC --><a name="table-of-contents"></a>
 
 ## Table of Contents
 
@@ -3570,7 +4621,11 @@ Modern operating systems like Linux, macOS, and Windows use refined variations o
 
 ---
 
+<!-- TOC --><a name="chapter-13-the-abstraction-address-spaces"></a>
+
 ## Chapter 13: The Abstraction - Address Spaces
+
+<!-- TOC --><a name="131-historical-context-early-memory-management"></a>
 
 ### 13.1 Historical Context: Early Memory Management
 
@@ -3592,6 +4647,8 @@ In the earliest computer systems, memory management was straightforward but infl
 ```
 
 **Problem with Early Approach**: Only one process could run at a time. To switch processes, the OS had to save the entire memory contents to disk—an extraordinarily slow operation that made proper system sharing impossible.
+
+<!-- TOC --><a name="132-multiprogramming-and-time-sharing"></a>
 
 ### 13.2 Multiprogramming and Time Sharing
 
@@ -3630,15 +4687,21 @@ As machines became expensive resources, two key innovations emerged:
 
 **Critical Issues Introduced**: With multiple processes in memory simultaneously, **isolation** and **protection** became paramount. A single errant or malicious process could read or write another process's memory, compromising the entire system.
 
+<!-- TOC --><a name="133-the-address-space-abstraction"></a>
+
 ### 13.3 The Address Space Abstraction
 
 The **address space** is the OS's answer to these isolation and performance requirements. It represents the **running program's view of memory in the system**. The OS creates the illusion that each process has its own large, private, contiguous block of memory.
+
+<!-- TOC --><a name="key-properties-of-an-address-space"></a>
 
 #### Key Properties of an Address Space
 
 1. **Large**: Each process perceives a complete, independent memory space (e.g., 32-bit or 64-bit addressing)
 2. **Private**: No other process can access its memory
 3. **Contiguous**: From the process's perspective, memory appears as an unbroken linear block starting at address 0
+
+<!-- TOC --><a name="typical-components-of-an-address-space"></a>
 
 #### Typical Components of an Address Space
 
@@ -3671,6 +4734,8 @@ A typical address space contains three major logical segments:
 16KB  - Maximum address
 ```
 
+<!-- TOC --><a name="why-this-abstraction-matters"></a>
+
 #### Why This Abstraction Matters
 
 1. **Ease of Use**: Programmers don't need to worry about where variables are stored; they simply allocate and use memory
@@ -3679,11 +4744,17 @@ A typical address space contains three major logical segments:
 
 ---
 
+<!-- TOC --><a name="chapter-14-interlude-memory-api"></a>
+
 ## Chapter 14: Interlude - Memory API
+
+<!-- TOC --><a name="141-types-of-memory-in-c-programs"></a>
 
 ### 14.1 Types of Memory in C Programs
 
 C programs use two distinct types of memory, each with different allocation models and lifespans:
+
+<!-- TOC --><a name="stack-memory-automatic-memory"></a>
 
 #### Stack Memory (Automatic Memory)
 
@@ -3707,6 +4778,8 @@ void func() {
 - Limited size (stack is typically small)
 - No manual management required
 
+<!-- TOC --><a name="heap-memory-dynamic-memory"></a>
+
 #### Heap Memory (Dynamic Memory)
 
 Heap memory requires **explicit programmer management**. Memory persists until the programmer explicitly frees it.
@@ -3725,6 +4798,8 @@ void func() {
 - Larger available space than stack
 - Slower allocation/deallocation
 - More flexible but error-prone
+
+<!-- TOC --><a name="142-the-malloc-system-call"></a>
 
 ### 14.2 The `malloc()` System Call
 
@@ -3768,6 +4843,8 @@ strcpy(str, "hello");
 free(str);
 ```
 
+<!-- TOC --><a name="143-the-free-system-call"></a>
+
 ### 14.3 The `free()` System Call
 
 `free()` returns previously allocated memory to the heap, making it available for future allocations.
@@ -3780,7 +4857,11 @@ free(x);
 
 **Critical Point**: The size is NOT passed to `free()`. The memory allocation library **tracks the size internally** by storing metadata before the returned pointer.
 
+<!-- TOC --><a name="144-common-memory-management-errors"></a>
+
 ### 14.4 Common Memory Management Errors
+
+<!-- TOC --><a name="error-1-forgetting-to-allocate"></a>
 
 #### Error 1: Forgetting to Allocate
 
@@ -3799,6 +4880,8 @@ strcpy(dst, src);                               // Now safe
 free(dst);                                      // Clean up
 ```
 
+<!-- TOC --><a name="error-2-buffer-overflow-not-allocating-enough"></a>
+
 #### Error 2: Buffer Overflow (Not Allocating Enough)
 
 ```c
@@ -3808,6 +4891,8 @@ strcpy(dst, src);  // Writes past allocated memory boundary
 ```
 
 **Result**: Corrupts memory, may crash or create security vulnerability
+
+<!-- TOC --><a name="error-3-uninitialized-memory-access"></a>
 
 #### Error 3: Uninitialized Memory Access
 
@@ -3824,6 +4909,8 @@ int *x = (int *) malloc(sizeof(int));
 *x = 0;  // Initialize to known value
 ```
 
+<!-- TOC --><a name="error-4-memory-leaks"></a>
+
 #### Error 4: Memory Leaks
 
 ```c
@@ -3839,7 +4926,11 @@ In long-running programs/systems (like the OS itself), repeatedly leaving alloca
 
 ---
 
+<!-- TOC --><a name="chapter-15-mechanism-address-translation"></a>
+
 ## Chapter 15: Mechanism - Address Translation
+
+<!-- TOC --><a name="151-the-core-problem"></a>
 
 ### 15.1 The Core Problem
 
@@ -3865,6 +4956,8 @@ Physical Memory (OS perspective):
 
 The process generates address 128 (for an instruction), but the actual instruction is at physical address 32896. How does the hardware know to translate 128 → 32896?
 
+<!-- TOC --><a name="152-hardware-based-address-translation"></a>
+
 ### 15.2 Hardware-Based Address Translation
 
 Address translation is a technique where **the processor hardware transforms each virtual address into a physical address**.
@@ -3880,6 +4973,8 @@ Physical Address (actual memory location)
 
 The beauty: This is **transparent to the process**. The process never sees physical addresses.
 
+<!-- TOC --><a name="153-base-and-bounds-dynamic-relocation"></a>
+
 ### 15.3 Base and Bounds (Dynamic Relocation)
 
 The simplest address translation technique uses two hardware registers per CPU:
@@ -3887,11 +4982,15 @@ The simplest address translation technique uses two hardware registers per CPU:
 1. **Base Register**: Physical address where the process is loaded
 2. **Bounds Register**: Maximum size of the address space (for protection)
 
+<!-- TOC --><a name="hardware-translation-formula"></a>
+
 #### Hardware Translation Formula
 
 ```
 Physical Address = Virtual Address + Base Register
 ```
+
+<!-- TOC --><a name="example-walkthrough"></a>
 
 #### Example Walkthrough
 
@@ -3912,6 +5011,8 @@ PhysicalAddress:   32896
 
 The hardware fetches from physical address 32896.
 
+<!-- TOC --><a name="bounds-checking-for-protection"></a>
+
 #### Bounds Checking for Protection
 
 Before translation, the hardware checks:
@@ -3930,9 +5031,13 @@ if (VirtualAddress >= BoundsRegister) {
 - Process tries to access Virtual Address 20000
 - 20000 >= 16384 → **PROTECTION FAULT** → OS terminates process
 
+<!-- TOC --><a name="hardware-component"></a>
+
 #### Hardware Component
 
 These registers live in the **Memory Management Unit (MMU)** on the processor chip.
+
+<!-- TOC --><a name="example-process-execution"></a>
 
 #### Example Process Execution
 
@@ -3960,13 +5065,19 @@ VirtualAddress: 15360
 → Fetch data from physical address 48128
 ```
 
+<!-- TOC --><a name="154-advantages-and-limitations"></a>
+
 ### 15.4 Advantages and Limitations
+
+<!-- TOC --><a name="advantages-1"></a>
 
 #### Advantages
 
 - **Simple**: Requires only addition and comparison
 - **Fast**: Hardware can do translation in parallel with cache access
 - **Trivial Relocation**: Process can be moved by just changing base register
+
+<!-- TOC --><a name="limitations"></a>
 
 #### Limitations
 
@@ -3977,7 +5088,11 @@ VirtualAddress: 15360
 
 ---
 
+<!-- TOC --><a name="chapter-16-segmentation"></a>
+
 ## Chapter 16: Segmentation
+
+<!-- TOC --><a name="161-the-problem-with-base-and-bounds"></a>
 
 ### 16.1 The Problem with Base-and-Bounds
 
@@ -3996,6 +5111,8 @@ With base-and-bounds, the entire 16KB must be in physical memory, even though th
 
 With 100 processes each with 16KB address spaces, we waste significant memory on unused gaps.
 
+<!-- TOC --><a name="162-segmentation-multiple-base-and-bounds-pairs"></a>
+
 ### 16.2 Segmentation: Multiple Base-and-Bounds Pairs
 
 **Key Insight**: Different parts of the address space have different characteristics:
@@ -4005,6 +5122,8 @@ With 100 processes each with 16KB address spaces, we waste significant memory on
 - **Stack**: Read-write, grows downward
 
 Instead of one base-and-bounds pair for the entire address space, use **multiple pairs—one per segment**.
+
+<!-- TOC --><a name="explicit-segmentation-hardware-determines-segment-by-address-bits"></a>
 
 #### Explicit Segmentation (Hardware Determines Segment by Address Bits)
 
@@ -4021,6 +5140,8 @@ Seg   (reserved)  Offset (12 bits)
 Top 2 bits = 01 → Use Heap segment register
 Remaining 12 bits = offset into segment
 ```
+
+<!-- TOC --><a name="segment-based-address-translation-algorithm"></a>
 
 #### Segment-Based Address Translation Algorithm
 
@@ -4041,6 +5162,8 @@ else {
 }
 ```
 
+<!-- TOC --><a name="concrete-example"></a>
+
 #### Concrete Example
 
 Suppose:
@@ -4058,6 +5181,8 @@ Offset (104) < Bounds (2048) ✓ OK
 PhysicalAddress = 34816 + 104 = 34920
 ```
 
+<!-- TOC --><a name="hardware-segment-register-state"></a>
+
 #### Hardware Segment Register State
 
 ```
@@ -4067,6 +5192,8 @@ PhysicalAddress = 34816 + 104 = 34920
 | Heap    | 34KB   | 3KB  | 1 (yes)   | Read-Write |
 | Stack   | 28KB   | 2KB  | 0 (no)    | Read-Write |
 ```
+
+<!-- TOC --><a name="163-handling-backward-growing-segments-stack"></a>
 
 ### 16.3 Handling Backward-Growing Segments (Stack)
 
@@ -4106,6 +5233,8 @@ if (Segment_GrowsPositive[Segment]) {
 }
 ```
 
+<!-- TOC --><a name="164-support-for-code-sharing"></a>
+
 ### 16.4 Support for Code Sharing
 
 **Motivation**: Shared libraries (like libc) shouldn't be replicated in memory for each process.
@@ -4136,7 +5265,11 @@ if (CanAccess(ProtectionBits, AccessType)) {
 }
 ```
 
+<!-- TOC --><a name="165-coarse-grained-vs-fine-grained-segmentation"></a>
+
 ### 16.5 Coarse-Grained vs. Fine-Grained Segmentation
+
+<!-- TOC --><a name="coarse-grained-modern-systems"></a>
 
 #### Coarse-Grained (Modern systems)
 
@@ -4144,13 +5277,19 @@ if (CanAccess(ProtectionBits, AccessType)) {
 - Simple, low hardware overhead
 - Less flexible
 
+<!-- TOC --><a name="fine-grained-multics-b5000"></a>
+
 #### Fine-Grained (Multics, B5000)
 
 - Many segments (thousands) provided by hardware
 - Requires segment table in memory
 - More flexible but complex
 
+<!-- TOC --><a name="166-the-fragmentation-problem"></a>
+
 ### 16.6 The Fragmentation Problem
+
+<!-- TOC --><a name="external-fragmentation"></a>
 
 #### External Fragmentation
 
@@ -4170,6 +5309,8 @@ After Compaction:
 
 **Problems with compaction**: Expensive (requires copying all data), time-consuming, can still leave fragmentation.
 
+<!-- TOC --><a name="allocation-strategies"></a>
+
 #### Allocation Strategies
 
 Various free-list algorithms attempt to minimize external fragmentation:
@@ -4185,11 +5326,17 @@ Various free-list algorithms attempt to minimize external fragmentation:
 
 ---
 
+<!-- TOC --><a name="chapter-17-free-space-management"></a>
+
 ## Chapter 17: Free-Space Management
+
+<!-- TOC --><a name="171-heap-data-structure-free-list"></a>
 
 ### 17.1 Heap Data Structure: Free List
 
 The most common approach to managing heap free space is the **free list**—a linked list of free memory regions.
+
+<!-- TOC --><a name="free-list-with-headers"></a>
 
 #### Free List with Headers
 
@@ -4214,6 +5361,8 @@ Free Chunk:
 - **Size**: Bytes in this chunk
 - **Magic Number**: Sanity check (ensures pointer is valid)
 - **Next Pointer** (for free chunks): Points to next free chunk
+
+<!-- TOC --><a name="example-heap-lifecycle"></a>
 
 #### Example Heap Lifecycle
 
@@ -4259,7 +5408,11 @@ All memory is free but fragmented into small pieces.
 Free:   [3964] (merged into one)
 ```
 
+<!-- TOC --><a name="172-basic-allocation-strategies"></a>
+
 ### 17.2 Basic Allocation Strategies
+
+<!-- TOC --><a name="best-fit"></a>
 
 #### Best Fit
 
@@ -4281,6 +5434,8 @@ Result: [10] → [30] → [5] → NULL
 **Pros**: Minimizes wasted space  
 **Cons**: Slow (O(n) search), leaves many small chunks
 
+<!-- TOC --><a name="worst-fit"></a>
+
 #### Worst Fit
 
 ```
@@ -4300,6 +5455,8 @@ Result: [10] → [15 used] → [15] → [20] → NULL
 **Pros**: Leaves large free chunks  
 **Cons**: Still requires O(n) search; empirically performs worst (high fragmentation)
 
+<!-- TOC --><a name="first-fit"></a>
+
 #### First Fit
 
 ```
@@ -4318,6 +5475,8 @@ Result: [10] → [15 used] → [15] → [20] → NULL
 **Pros**: Fast (O(1) average), simple  
 **Cons**: Can fragment the beginning of the list
 
+<!-- TOC --><a name="next-fit"></a>
+
 #### Next Fit
 
 ```
@@ -4328,7 +5487,11 @@ Resume search from there next time
 Benefits: Spreads allocations more evenly throughout list
 ```
 
+<!-- TOC --><a name="173-advanced-approaches"></a>
+
 ### 17.3 Advanced Approaches
+
+<!-- TOC --><a name="segregated-lists"></a>
 
 #### Segregated Lists
 
@@ -4348,6 +5511,8 @@ General:     [64] → [128] → [256] → NULL
 - Reduced search time
 
 **Example**: Java virtual machine uses this approach
+
+<!-- TOC --><a name="slab-allocator-jeff-bonwick-solaris"></a>
 
 #### Slab Allocator (Jeff Bonwick, Solaris)
 
@@ -4372,6 +5537,8 @@ When objects unused: Return slabs to general allocator
 - Re-initialized objects are already in proper state
 - Reduces initialization/destruction overhead
 - Scales well for kernel allocations
+
+<!-- TOC --><a name="buddy-allocation"></a>
 
 #### Buddy Allocation
 
@@ -4400,6 +5567,8 @@ We have buddy [32|32] → merge to [64] → return 64
 **Advantage**: Coalescing is perfectly efficient  
 **Disadvantage**: Internal fragmentation (can only allocate power-of-2 sizes)
 
+<!-- TOC --><a name="174-growing-the-heap"></a>
+
 ### 17.4 Growing the Heap
 
 When a heap allocator runs out of free space, it must request more from the OS using `sbrk()` or similar:
@@ -4417,7 +5586,11 @@ new_memory = sbrk(num_pages);
 
 ---
 
+<!-- TOC --><a name="chapter-18-paging-introduction"></a>
+
 ## Chapter 18: Paging - Introduction
+
+<!-- TOC --><a name="181-limitations-of-segmentation"></a>
 
 ### 18.1 Limitations of Segmentation
 
@@ -4429,6 +5602,8 @@ Despite solving fragmentation in some cases, segmentation has fundamental issues
 
 **Solution**: Use **fixed-sized units** called **pages**
 
+<!-- TOC --><a name="182-paging-basic-concept"></a>
+
 ### 18.2 Paging: Basic Concept
 
 Instead of variable-sized segments, divide both virtual and physical memory into **fixed-size chunks**:
@@ -4436,6 +5611,8 @@ Instead of variable-sized segments, divide both virtual and physical memory into
 - **Page**: Fixed-size unit of virtual address space (typically 4KB)
 - **Page Frame** (or Physical Frame): Fixed-size unit of physical memory (same size as page)
 - **Page Table**: Mapping from virtual page numbers to physical frame numbers
+
+<!-- TOC --><a name="address-space-division"></a>
 
 #### Address Space Division
 
@@ -4449,6 +5626,8 @@ Virtual Address (32-bit):
 Physical Address:
 [ PFN (20 bits) ][ Offset (12 bits) ]
 ```
+
+<!-- TOC --><a name="key-insight"></a>
 
 #### Key Insight
 
@@ -4464,9 +5643,13 @@ But this overhead is acceptable because:
 2. We can use hierarchical page tables (multi-level)
 3. We can use the TLB to cache frequent translations
 
+<!-- TOC --><a name="183-page-table-structure-and-contents"></a>
+
 ### 18.3 Page Table Structure and Contents
 
 A **page table** is a data structure stored in memory (typically in kernel space) that maps virtual page numbers to physical page frames.
+
+<!-- TOC --><a name="linear-page-table-simple-array"></a>
 
 #### Linear Page Table (Simple Array)
 
@@ -4474,6 +5657,8 @@ A **page table** is a data structure stored in memory (typically in kernel space
 PageTableEntry = array[VirtualPageNumber]
 PFN = PageTableEntry.PageFrameNumber
 ```
+
+<!-- TOC --><a name="page-table-entry-pte-fields"></a>
 
 #### Page Table Entry (PTE) Fields
 
@@ -4491,6 +5676,8 @@ Each PTE typically contains (example: x86):
 | 8      | D (Dirty)                | Was page recently written?                     |
 | 9-11   | (Available)              | OS can use for its own purposes                |
 | 12-31  | PFN (Page Frame Number)  | Physical page frame address                    |
+
+<!-- TOC --><a name="meaning-of-key-bits"></a>
 
 #### Meaning of Key Bits
 
@@ -4513,6 +5700,8 @@ Each PTE typically contains (example: x86):
 
 - A=1: Page has been read or written recently
 - Used for page replacement (recently accessed pages often stay)
+
+<!-- TOC --><a name="184-address-translation-with-paging"></a>
 
 ### 18.4 Address Translation with Paging
 
@@ -4538,6 +5727,8 @@ PTE contains: PFN = 7, Valid=1, Prot=readable
 Physical Address = (7 << 4) | 5 = 112 + 5 = 117
 Fetch data from physical address 117
 ```
+
+<!-- TOC --><a name="algorithm"></a>
 
 #### Algorithm
 
@@ -4567,6 +5758,8 @@ else {
 }
 ```
 
+<!-- TOC --><a name="185-the-paging-slowdown-problem"></a>
+
 ### 18.5 The Paging Slowdown Problem
 
 **Critical Issue**: Every memory access now requires TWO memory accesses:
@@ -4588,6 +5781,8 @@ VirtualAddress 21
 ```
 
 This would slow programs by **2x or more**! Solution: Use the **TLB**.
+
+<!-- TOC --><a name="186-example-memory-trace"></a>
 
 ### 18.6 Example Memory Trace
 
@@ -4621,7 +5816,11 @@ Assumptions:
 
 ---
 
+<!-- TOC --><a name="chapter-19-paging-faster-translations-tlbs"></a>
+
 ## Chapter 19: Paging - Faster Translations (TLBs)
+
+<!-- TOC --><a name="191-the-tlb-translation-lookaside-buffer"></a>
 
 ### 19.1 The TLB: Translation Lookaside Buffer
 
@@ -4638,6 +5837,8 @@ TLB Hit (90%)→ Instant translation
 TLB Miss (10%)→ Fetch from page table in memory
 ```
 
+<!-- TOC --><a name="192-tlb-organization"></a>
+
 ### 19.2 TLB Organization
 
 A typical TLB:
@@ -4645,6 +5846,8 @@ A typical TLB:
 - **Size**: 32, 64, or 128 entries
 - **Associativity**: Fully associative (any entry can hold any translation)
 - **Search**: Parallel search of all entries
+
+<!-- TOC --><a name="tlb-entry-format"></a>
 
 #### TLB Entry Format
 
@@ -4660,6 +5863,8 @@ Each entry contains:
 - **Protection Bits**: Read/write/execute permissions
 - **ASID**: Address Space ID (identifies which process owns this entry)
 - **Dirty Bit**: Has page been modified?
+
+<!-- TOC --><a name="tlb-lookup-algorithm-hardware-managed"></a>
 
 #### TLB Lookup Algorithm (Hardware Managed)
 
@@ -4682,9 +5887,13 @@ if (Hit == True) {  // TLB Hit
 }
 ```
 
+<!-- TOC --><a name="193-who-handles-tlb-misses"></a>
+
 ### 19.3 Who Handles TLB Misses?
 
 Two approaches exist, reflecting the CISC vs RISC divide:
+
+<!-- TOC --><a name="hardware-managed-tlb-x86-older-systems"></a>
 
 #### Hardware-Managed TLB (x86, older systems)
 
@@ -4700,6 +5909,8 @@ The hardware itself handles the TLB miss:
 
 **Advantage**: Simple from OS perspective  
 **Disadvantage**: Hardware must understand page table format; less flexibility
+
+<!-- TOC --><a name="software-managed-tlb-mips-sparc"></a>
 
 #### Software-Managed TLB (MIPS, SPARC)
 
@@ -4728,6 +5939,8 @@ TLB_Miss_Exception() {
 
 **Key Detail**: Return-from-trap after TLB miss must **retry the faulting instruction**, not continue to the next instruction (unlike normal traps).
 
+<!-- TOC --><a name="194-context-switches-and-the-tlb-problem"></a>
+
 ### 19.4 Context Switches and the TLB Problem
 
 **Problem**: TLB entries contain virtual-to-physical translations that are **process-specific**.
@@ -4745,6 +5958,8 @@ If TLB still has P1's entry:
   VPN 10 → Could translate to wrong PFN or wrong address space!
 ```
 
+<!-- TOC --><a name="solution-1-flush-tlb-on-context-switch"></a>
+
 #### Solution 1: Flush TLB on Context Switch
 
 On every context switch, invalidate all TLB entries:
@@ -4760,6 +5975,8 @@ ContextSwitch(ProcessOld, ProcessNew) {
 ```
 
 **Cost**: All TLB entries become misses, slowing down new process initially
+
+<!-- TOC --><a name="solution-2-address-space-identifier-asid"></a>
 
 #### Solution 2: Address Space Identifier (ASID)
 
@@ -4777,6 +5994,8 @@ TLB lookup now matches both VPN and ASID
 **Advantage**: Keep TLB entries across context switches  
 **Disadvantage**: Requires hardware ASID support; limited ASID space
 
+<!-- TOC --><a name="195-tlb-performance-impact"></a>
+
 ### 19.5 TLB Performance Impact
 
 With a good TLB:
@@ -4793,7 +6012,11 @@ Average latency = 0.99 * 1 + 0.01 * 100 = 2 cycles
 
 ---
 
+<!-- TOC --><a name="chapter-20-paging-smaller-tables"></a>
+
 ## Chapter 20: Paging - Smaller Tables
+
+<!-- TOC --><a name="201-the-page-table-size-problem"></a>
 
 ### 20.1 The Page Table Size Problem
 
@@ -4812,9 +6035,13 @@ With 100 processes: 400MB just for page tables!
 
 For 64-bit address spaces, this becomes catastrophic (millions of gigabytes).
 
+<!-- TOC --><a name="202-multi-level-page-tables"></a>
+
 ### 20.2 Multi-Level Page Tables
 
 Instead of one flat page table, use a **hierarchical structure** with multiple levels.
+
+<!-- TOC --><a name="two-level-page-table-x86"></a>
 
 #### Two-Level Page Table (x86)
 
@@ -4854,10 +6081,14 @@ Virtual Address (32-bit):
 8. PhysicalAddress = (PFN << 12) | (VirtualAddress & 0xFFF)
 ```
 
+<!-- TOC --><a name="advantages-of-multi-level"></a>
+
 #### Advantages of Multi-Level
 
 1. **Sparse address spaces work well**: Only allocate page tables for used regions
 2. **Smaller memory footprint**: Page directory small; page tables allocated on-demand
+
+<!-- TOC --><a name="example-sparse-address-space"></a>
 
 #### Example: Sparse Address Space
 
@@ -4874,6 +6105,8 @@ Two-level:
   Total: 12KB vs 4MB → 333x savings!
 ```
 
+<!-- TOC --><a name="three-level-and-beyond"></a>
+
 #### Three-Level and Beyond
 
 Many modern systems use three or more levels:
@@ -4889,6 +6122,8 @@ Each level trades off:
 
 - **Depth** (more memory accesses per translation)
 - **Space** (larger sparse regions can be left unallocated at upper levels)
+
+<!-- TOC --><a name="203-hybrid-approach-paging-and-segmentation"></a>
 
 ### 20.3 Hybrid Approach: Paging and Segmentation
 
@@ -4923,7 +6158,11 @@ PhysicalAddress = (PTE.PFN << 12) | (VirtualAddress & OFFSET_MASK);
 
 ---
 
+<!-- TOC --><a name="chapter-21-beyond-physical-memory-mechanisms"></a>
+
 ## Chapter 21: Beyond Physical Memory - Mechanisms
+
+<!-- TOC --><a name="211-the-problem-address-spaces-larger-than-physical-memory"></a>
 
 ### 21.1 The Problem: Address Spaces Larger Than Physical Memory
 
@@ -4933,12 +6172,16 @@ Modern workloads often have virtual address spaces (32-64 bits) much larger than
 
 The OS can page out rarely-used pages to disk, freeing physical frames for other uses. When a page is needed, page it back in.
 
+<!-- TOC --><a name="212-page-faults-and-the-present-bit"></a>
+
 ### 21.2 Page Faults and the Present Bit
 
 The **Present Bit (P)** in a PTE indicates if a page is in physical memory:
 
 - P=1: Page is in physical memory
 - P=0: Page is not in memory (swapped to disk); access triggers a **page fault**
+
+<!-- TOC --><a name="page-fault-handling"></a>
 
 #### Page Fault Handling
 
@@ -4982,6 +6225,8 @@ PageFault_Handler(VirtualAddress) {
 }
 ```
 
+<!-- TOC --><a name="213-what-if-memory-is-full"></a>
+
 ### 21.3 What If Memory Is Full?
 
 When all physical frames are occupied, the OS must **evict** a page to disk to make room for the new page.
@@ -5002,6 +6247,8 @@ Page Fault for new page:
 Physical Memory After:
 [Page A] [New Page] [Page C] [Page D]
 ```
+
+<!-- TOC --><a name="214-page-fault-control-flow"></a>
 
 ### 21.4 Page Fault Control Flow
 
@@ -5036,6 +6283,8 @@ Complete flow of a memory access:
 12. TLB hit, access memory
 ```
 
+<!-- TOC --><a name="215-swap-space-management"></a>
+
 ### 21.5 Swap Space Management
 
 The OS reserves disk space for virtual memory:
@@ -5059,13 +6308,19 @@ Disk Layout:
 
 ---
 
+<!-- TOC --><a name="chapter-22-beyond-physical-memory-policies"></a>
+
 ## Chapter 22: Beyond Physical Memory - Policies
+
+<!-- TOC --><a name="221-page-replacement-policies"></a>
 
 ### 22.1 Page Replacement Policies
 
 The **page replacement policy** decides which page to evict when physical memory is full.
 
 "Wrong" decisions cause programs to run 10,000-100,000x slower (swapping at disk speed vs. memory speed).
+
+<!-- TOC --><a name="222-the-optimal-policy"></a>
 
 ### 22.2 The Optimal Policy
 
@@ -5092,6 +6347,8 @@ OPT evicts C (furthest in future) and loads D
 
 Used as a benchmark to evaluate other policies.
 
+<!-- TOC --><a name="223-fifo-first-in-first-out"></a>
+
 ### 22.3 FIFO (First In First Out)
 
 **FIFO**: Evict the page that has been in memory the **longest** (oldest arrival time).
@@ -5109,6 +6366,8 @@ Result: [E] [B] [C]
 **Disadvantages**: Often poor hit rate; may evict frequently-used old pages
 
 **Anomaly**: Increasing cache size can actually **decrease** hit rate (Belady's Anomaly)
+
+<!-- TOC --><a name="224-lru-least-recently-used"></a>
 
 ### 22.4 LRU (Least Recently Used)
 
@@ -5139,6 +6398,8 @@ Memory overhead for perfect LRU:
 - Timestamp every access
 - Update on every memory operation (huge overhead!)
 ```
+
+<!-- TOC --><a name="225-approximating-lru-the-clock-algorithm"></a>
 
 ### 22.5 Approximating LRU: The Clock Algorithm
 
@@ -5184,6 +6445,8 @@ B has use bit 0 → evict B, load new page, advance
 
 **Advantage**: Practical (minimal OS overhead)
 
+<!-- TOC --><a name="226-considering-dirty-pages"></a>
+
 ### 22.6 Considering Dirty Pages
 
 One optimization: Prefer to evict **clean** (unmodified) pages over **dirty** (modified) pages.
@@ -5210,6 +6473,8 @@ Preference to evict:
 
 ---
 
+<!-- TOC --><a name="key-takeaways-6"></a>
+
 #### Key Takeaways
 
 - **Virtual memory abstracts physical memory**: Each process sees its own large, private, contiguous address space
@@ -5220,6 +6485,8 @@ Preference to evict:
 - **Multi-level page tables scale**: Allow page tables themselves to be paged; handle large address spaces efficiently
 - **Swapping and page replacement are mechanisms**: OS can run programs larger than physical memory; policy choices heavily impact performance
 - **LRU is near-optimal**: Performance-cost tradeoff; clock algorithm provides practical approximation
+
+<!-- TOC --><a name="important-terms-6"></a>
 
 #### Important Terms
 
@@ -5269,7 +6536,11 @@ Preference to evict:
 
 ---
 
+<!-- TOC --><a name="summary-the-complete-memory-virtualization-picture"></a>
+
 ## Summary: The Complete Memory Virtualization Picture
+
+<!-- TOC --><a name="the-three-layers"></a>
 
 ### The Three Layers
 
@@ -5291,6 +6562,8 @@ Preference to evict:
 - Managed by OS, shared among all processes
 - Supplemented by swap space on disk
 
+<!-- TOC --><a name="why-multiple-techniques"></a>
+
 ### Why Multiple Techniques?
 
 - **Base/Bounds**: Simplest, but inflexible; wastes memory on sparse address spaces
@@ -5299,6 +6572,8 @@ Preference to evict:
 - **TLB**: Solves paging slowdown; essential for modern performance
 - **Multi-level tables**: Solves page table size problem; scales to 64-bit; allows sparse allocation
 - **Swap**: Allows programs larger than physical memory; but disk access is slow
+
+<!-- TOC --><a name="performance-equation"></a>
 
 ### Performance Equation
 
@@ -5313,6 +6588,8 @@ Modern system with good TLB:
     = 0.99 + 1 + 100
     ≈ 102 cycles (page faults dominate if they occur)
 ```
+
+<!-- TOC --><a name="practical-implementation"></a>
 
 ### Practical Implementation
 
@@ -5333,7 +6610,11 @@ This layered approach provides:
 - **Protection**: Processes can't interfere
 - **Transparency**: Process doesn't know actual memory layout
 
+<!-- TOC --><a name="concurrency-and-synchronization-a-complete-study-guide"></a>
+
 # Concurrency and Synchronization: A Complete Study Guide
+
+<!-- TOC --><a name="table-of-contents-1"></a>
 
 ## Table of Contents
 
@@ -5345,9 +6626,15 @@ This layered approach provides:
 
 ---
 
+<!-- TOC --><a name="chapter-26-concurrency-an-introduction"></a>
+
 ## Chapter 26: Concurrency: An Introduction
 
+<!-- TOC --><a name="261-introduction-to-threads-and-concurrency"></a>
+
 ### 26.1 Introduction to Threads and Concurrency
+
+<!-- TOC --><a name="what-are-threads"></a>
 
 #### What Are Threads?
 
@@ -5359,13 +6646,19 @@ A **thread** is an execution context within a process that runs independently of
 
 Threads are created using system calls like `pthread_create()` on POSIX systems (Linux, macOS, BSD).
 
+<!-- TOC --><a name="why-threads-matter-the-concurrency-problem"></a>
+
 #### Why Threads Matter: The Concurrency Problem
 
 **Concurrency** refers to multiple threads (or processes) executing code at overlapping time periods. On **single-CPU systems**, this is achieved through **time-slicing** — the OS rapidly switches between threads. On **multi-CPU systems**, threads truly execute in parallel.
 
 The challenge of concurrency is that thread scheduling is non-deterministic. The OS scheduler decides which thread runs at any given moment. A programmer **cannot predict the exact interleaving of thread execution**, which leads to subtle but critical bugs.
 
+<!-- TOC --><a name="262-thread-creation-and-execution"></a>
+
 ### 26.2 Thread Creation and Execution
+
+<!-- TOC --><a name="basic-posix-thread-example"></a>
 
 #### Basic POSIX Thread Example
 
@@ -5410,6 +6703,8 @@ int main(int argc, char *argv[]) {
 
 **Expected Behavior:**
 Each thread increments `counter` 10 million times, so the final value should be 20,000,000. However, due to race conditions (explained below), the actual result is often incorrect.
+
+<!-- TOC --><a name="thread-execution-traces"></a>
 
 #### Thread Execution Traces
 
@@ -5461,7 +6756,11 @@ Store counter   -                51 (wrong! should be 52)
 
 This is the race condition.
 
+<!-- TOC --><a name="263-race-conditions-and-the-critical-section-problem"></a>
+
 ### 26.3 Race Conditions and the Critical Section Problem
+
+<!-- TOC --><a name="the-race-condition"></a>
 
 #### The Race Condition
 
@@ -5472,6 +6771,8 @@ A **race condition** (specifically, a **data race**) occurs when:
 3. The execution order of these accesses is not synchronized
 
 The result is **indeterminate** — the final value depends on unpredictable thread interleaving and varies from run to run.
+
+<!-- TOC --><a name="low-level-assembly-why-this-happens"></a>
 
 #### Low-Level Assembly: Why This Happens
 
@@ -5484,6 +6785,8 @@ movl    %eax, 0x8049a1c      # Store eax back to memory
 ```
 
 This is a **Read-Modify-Write (RMW)** sequence. If a context switch happens between any two instructions, another thread can interfere.
+
+<!-- TOC --><a name="detailed-execution-trace"></a>
 
 #### Detailed Execution Trace
 
@@ -5506,9 +6809,13 @@ Final counter value: **51 (WRONG!)**
 
 Expected: 52 (both increments succeeded)
 
+<!-- TOC --><a name="the-critical-section"></a>
+
 #### The Critical Section
 
 A **critical section** is a code region that accesses a shared resource and must execute **atomically** — that is, without interruption from other threads. The goal is **mutual exclusion (mutex)**: only one thread can execute the critical section at a time.
+
+<!-- TOC --><a name="264-the-heart-of-the-problem-uncontrolled-scheduling"></a>
 
 ### 26.4 The Heart of the Problem: Uncontrolled Scheduling
 
@@ -5523,13 +6830,21 @@ This lack of synchronization between threads creates opportunities for race cond
 
 ---
 
+<!-- TOC --><a name="chapter-28-locks"></a>
+
 ## Chapter 28: Locks
 
+<!-- TOC --><a name="281-locks-the-basic-idea"></a>
+
 ### 28.1 Locks: The Basic Idea
+
+<!-- TOC --><a name="what-is-a-lock"></a>
 
 #### What Is a Lock?
 
 A **lock** (or **mutex** in POSIX terminology) is a synchronization primitive that enforces **mutual exclusion** — exactly one thread can hold the lock at a time.
+
+<!-- TOC --><a name="lock-semantics"></a>
 
 #### Lock Semantics
 
@@ -5542,6 +6857,8 @@ A lock has two states:
 
 - `lock()` — Try to acquire the lock. If free, immediately acquire it and enter the critical section. If held by another thread, the calling thread **blocks** (waits) until the lock becomes free.
 - `unlock()` — Release the lock. If other threads are waiting, one is chosen to acquire the lock and proceed.
+
+<!-- TOC --><a name="example-using-a-lock-to-protect-a-critical-section"></a>
 
 #### Example: Using a Lock to Protect a Critical Section
 
@@ -5556,6 +6873,8 @@ unlock(&mutex);
 
 Now, even if context switches occur, only one thread executes `balance = balance + 1` at a time.
 
+<!-- TOC --><a name="posix-mutex-example"></a>
+
 #### POSIX Mutex Example
 
 ```c
@@ -5569,6 +6888,8 @@ balance = balance + 1;
 pthread_mutex_unlock(&lock);
 ```
 
+<!-- TOC --><a name="282-evaluating-locks"></a>
+
 ### 28.2 Evaluating Locks
 
 Good lock implementations must satisfy three properties:
@@ -5579,7 +6900,11 @@ Good lock implementations must satisfy three properties:
 | **Fairness**         | Threads waiting for a lock eventually acquire it; no thread starves indefinitely | Liveness—ensures all threads make progress |
 | **Performance**      | Low overhead in uncontended cases; good scaling with many threads                | Efficiency—doesn't slow down the system    |
 
+<!-- TOC --><a name="283-building-locks-hardware-support"></a>
+
 ### 28.3 Building Locks: Hardware Support
+
+<!-- TOC --><a name="challenge-disabling-interrupts-single-cpu-only"></a>
 
 #### Challenge: Disabling Interrupts (Single-CPU Only)
 
@@ -5607,6 +6932,8 @@ void unlock() {
 2. **Dangerous** — a buggy program that forgets to enable interrupts can hang the entire system
 3. **Poor performance** — interrupts are needed for I/O, system responsiveness, and other OS functions
 4. **Privilege required** — user programs typically cannot disable interrupts
+
+<!-- TOC --><a name="test-and-set-atomic-instruction"></a>
 
 #### Test-and-Set (Atomic Instruction)
 
@@ -5644,6 +6971,8 @@ void unlock(int *flag) {
 
 **Problem:** This is a **spin-lock** — threads waste CPU cycles repeatedly checking the flag. On a single CPU, if one thread is interrupted while holding the lock, other threads spin uselessly until the lock holder gets scheduled again.
 
+<!-- TOC --><a name="compare-and-swap-cas"></a>
+
 #### Compare-and-Swap (CAS)
 
 Another common atomic instruction is **compare-and-swap** (CAS):
@@ -5673,6 +7002,8 @@ void unlock(int *flag) {
     *flag = 0;
 }
 ```
+
+<!-- TOC --><a name="fetch-and-add-and-ticket-locks"></a>
 
 #### Fetch-and-Add and Ticket Locks
 
@@ -5714,7 +7045,11 @@ void unlock(lock_t *lock) {
 
 **Problem:** Spinning is still inefficient, especially on single-CPU systems.
 
+<!-- TOC --><a name="284-os-support-for-efficient-locks"></a>
+
 ### 28.4 OS Support for Efficient Locks
+
+<!-- TOC --><a name="the-spinning-problem"></a>
 
 #### The Spinning Problem
 
@@ -5737,6 +7072,8 @@ Time    Thread 1           Thread 2         CPU State
 
 With N threads contending for one lock, a single context switch can waste N-1 entire time slices.
 
+<!-- TOC --><a name="yield-based-locking"></a>
+
 #### Yield-Based Locking
 
 A simple improvement: if the lock is held, yield the CPU instead of spinning:
@@ -5755,6 +7092,8 @@ void unlock() {
 `yield()` is a system call that moves the current thread from RUNNING → READY state, allowing the OS scheduler to run another thread.
 
 **Problem:** With 100 threads contending for a lock, a thread might yield 99 times before getting its turn. Each yield/reschedule cycle has overhead (context switch). Plus, there's no guarantee against **starvation** — a thread might get stuck in a partial-yield loop while others repeatedly acquire and release the lock.
+
+<!-- TOC --><a name="queue-based-locking-with-park-and-unpark"></a>
 
 #### Queue-Based Locking with park() and unpark()
 
@@ -5826,6 +7165,8 @@ m->guard = 0;
 park();        // If unpark() already happened, return immediately
 ```
 
+<!-- TOC --><a name="linux-futexes"></a>
+
 #### Linux Futexes
 
 Linux provides a more efficient **futex** (fast userspace mutex) mechanism:
@@ -5835,6 +7176,8 @@ Linux provides a more efficient **futex** (fast userspace mutex) mechanism:
 - The kernel avoids context switches when possible by checking atomicity
 
 A futex provides further optimization: fast path (uncontended case) avoids system calls entirely.
+
+<!-- TOC --><a name="285-summary-building-efficient-locks"></a>
 
 ### 28.5 Summary: Building Efficient Locks
 
@@ -5848,7 +7191,11 @@ A futex provides further optimization: fast path (uncontended case) avoids syste
 
 ---
 
+<!-- TOC --><a name="chapter-29-lock-based-concurrent-data-structures"></a>
+
 ## Chapter 29: Lock-Based Concurrent Data Structures
+
+<!-- TOC --><a name="291-concurrent-counter"></a>
 
 ### 29.1 Concurrent Counter
 
@@ -5881,7 +7228,11 @@ int counter_get(counter_t *c) {
 
 **Lesson:** Lock the entire operation (read is also a critical section; without the lock, you might read while another thread is incrementing).
 
+<!-- TOC --><a name="292-concurrent-linked-list"></a>
+
 ### 29.2 Concurrent Linked List
+
+<!-- TOC --><a name="naive-approach-coarse-grained-locking"></a>
 
 #### Naive Approach (Coarse-Grained Locking)
 
@@ -5938,6 +7289,8 @@ int List_Lookup(list_t *L, int key) {
 
 **Issue:** `malloc()` is slow; we hold the lock during memory allocation, preventing other threads from accessing the list.
 
+<!-- TOC --><a name="optimized-approach-lock-only-the-critical-section"></a>
+
 #### Optimized Approach: Lock Only the Critical Section
 
 ```c
@@ -5976,6 +7329,8 @@ int List_Lookup(list_t *L, int key) {
 
 **Improvement:** Free the lock as soon as possible; allocate memory outside the critical section.
 
+<!-- TOC --><a name="fine-grained-locking-hand-over-hand-locking"></a>
+
 #### Fine-Grained Locking: Hand-Over-Hand Locking
 
 Instead of one lock for the entire list, add a lock per node:
@@ -5997,6 +7352,8 @@ When traversing:
 **Theoretically:** Enables multiple threads to traverse different parts of the list simultaneously.
 
 **In practice:** Overhead of acquiring/releasing a lock per node often exceeds the benefit of allowing concurrent traversals, especially if the list is not massive.
+
+<!-- TOC --><a name="293-concurrent-queue"></a>
 
 ### 29.3 Concurrent Queue
 
@@ -6057,6 +7414,8 @@ int Queue_Dequeue(queue_t *q, int *value) {
 
 **Dummy node:** A sentinel node at initialization facilitates separation of head and tail operations.
 
+<!-- TOC --><a name="294-concurrent-hash-table"></a>
+
 ### 29.4 Concurrent Hash Table
 
 A hash table is an array of buckets (lists). Each bucket can have its own lock:
@@ -6088,11 +7447,17 @@ int Hash_Lookup(hash_t *H, int key) {
 
 ---
 
+<!-- TOC --><a name="chapter-30-condition-variables"></a>
+
 ## Chapter 30: Condition Variables
+
+<!-- TOC --><a name="301-the-need-for-condition-variables"></a>
 
 ### 30.1 The Need for Condition Variables
 
 Sometimes threads must wait for a **condition** — a specific state of program execution — before proceeding.
+
+<!-- TOC --><a name="example-producer-consumer-problem"></a>
 
 #### Example: Producer-Consumer Problem
 
@@ -6141,9 +7506,13 @@ void *consumer(void *arg) {
 
 **Solution:** **Condition variables** allow threads to sleep until a condition becomes true.
 
+<!-- TOC --><a name="302-condition-variables-core-semantics"></a>
+
 ### 30.2 Condition Variables: Core Semantics
 
 A **condition variable (CV)** is a queue of threads. It has two main operations:
+
+<!-- TOC --><a name="waitlock"></a>
 
 #### `wait(lock)`
 
@@ -6161,6 +7530,8 @@ void wait(cond_t *cv, mutex_t *lock) {
 
 **Semantics:** The calling thread releases the lock and sleeps on the CV. The lock is released atomically with sleep to prevent a race condition where the thread sleeps before another thread signals.
 
+<!-- TOC --><a name="signallock"></a>
+
 #### `signal(lock)`
 
 ```c
@@ -6172,6 +7543,8 @@ void signal(cond_t *cv) {
 
 **Note:** Signaling does NOT automatically make the woken thread run. It moves the thread from blocked state to ready; the descheduler decides when it runs.
 
+<!-- TOC --><a name="broadcast"></a>
+
 #### `broadcast()`
 
 ```c
@@ -6179,6 +7552,8 @@ void broadcast(cond_t *cv) {
     // Wake ALL threads sleeping on this CV
 }
 ```
+
+<!-- TOC --><a name="303-example-producer-consumer-with-condition-variables"></a>
 
 ### 30.3 Example: Producer-Consumer with Condition Variables
 
@@ -6241,6 +7616,8 @@ void *consumer(void *arg) {
 }
 ```
 
+<!-- TOC --><a name="execution-timeline"></a>
+
 #### Execution Timeline
 
 ```
@@ -6268,6 +7645,8 @@ signal(&empty)
 unlock(&lock)                             1
                                           ...
 ```
+
+<!-- TOC --><a name="why-use-while-instead-of-if"></a>
 
 #### Why Use `while` Instead of `if`?
 
@@ -6309,6 +7688,8 @@ Alternatively, use `broadcast()` to wake all threads and let them check conditio
 cond_broadcast(&cond);  // Wake everyone; they'll recheck while loops
 ```
 
+<!-- TOC --><a name="304-important-rules-for-condition-variables"></a>
+
 ### 30.4 Important Rules for Condition Variables
 
 1. **Always hold the lock when calling `wait()`, `signal()`, or `broadcast()`**
@@ -6318,7 +7699,11 @@ cond_broadcast(&cond);  // Wake everyone; they'll recheck while loops
 
 ---
 
+<!-- TOC --><a name="chapter-31-semaphores"></a>
+
 ## Chapter 31: Semaphores
+
+<!-- TOC --><a name="311-introduction-to-semaphores"></a>
 
 ### 31.1 Introduction to Semaphores
 
@@ -6326,6 +7711,8 @@ A **semaphore** is a low-level synchronization primitive that combines aspects o
 
 - An integer value (the semaphore counter)
 - Two atomic operations: `wait()` (also called `P()` or `down()`) and `post()` (also called `V()` or `up()`)
+
+<!-- TOC --><a name="semaphore-operations"></a>
 
 #### Semaphore Operations
 
@@ -6350,6 +7737,8 @@ if (any threads waiting) {
 
 **Key:** Both operations are atomic (indivisible).
 
+<!-- TOC --><a name="312-using-semaphores-as-mutexes-locks"></a>
+
 ### 31.2 Using Semaphores as Mutexes (Locks)
 
 A semaphore initialized to 1 acts as a binary lock:
@@ -6370,6 +7759,8 @@ sem_post(&mutex);     // Increment to 1; wake waiter if any
 - Second thread calls `sem_wait()` → value is 0 → sleeps
 - First thread calls `sem_post()` → value becomes 1 → wakes second thread
 - Second thread resumes from `sem_wait()` → value becomes 0 → enters critical section
+
+<!-- TOC --><a name="313-using-semaphores-for-ordering"></a>
 
 ### 31.3 Using Semaphores for Ordering
 
@@ -6410,7 +7801,11 @@ child: end
 
 The child cannot proceed until the parent chooses to signal.
 
+<!-- TOC --><a name="314-producer-consumer-problem-with-semaphores"></a>
+
 ### 31.4 Producer-Consumer Problem with Semaphores
+
+<!-- TOC --><a name="initial-attempt-incorrect"></a>
 
 #### Initial Attempt (Incorrect)
 
@@ -6442,6 +7837,8 @@ int main() {
 ```
 
 **Problem:** This works for a single producer and single consumer, but with multiple producers or consumers, a **data race** can occur. Two producers might both see an empty slot and both write to it simultaneously.
+
+<!-- TOC --><a name="corrected-solution-with-mutex"></a>
 
 #### Corrected Solution (with Mutex)
 
@@ -6487,6 +7884,8 @@ int main() {
 
 This ensures that `put()` and `get()` are protected.
 
+<!-- TOC --><a name="315-initializing-semaphores-correctly"></a>
+
 ### 31.5 Initializing Semaphores Correctly
 
 **Principle:** Initialize the semaphore to the number of resources you can immediately give away.
@@ -6497,6 +7896,8 @@ This ensures that `put()` and `get()` are protected.
 | **Ordering (child waits for parent)** | 0             | You have no resources initially; parent creates one by signaling |
 | **Bounded buffer (N slots)**          | N             | You have N empty slots available initially                       |
 | **Bounded buffer (initial data)**     | 0             | You have no full slots initially                                 |
+
+<!-- TOC --><a name="316-semaphores-vs-condition-variables-vs-locks"></a>
 
 ### 31.6 Semaphores vs. Condition Variables vs. Locks
 
@@ -6510,7 +7911,11 @@ This ensures that `put()` and `get()` are protected.
 
 ---
 
+<!-- TOC --><a name="key-takeaways-7"></a>
+
 ## Key Takeaways
+
+<!-- TOC --><a name="chapter-26-concurrency-and-introduction"></a>
 
 ### Chapter 26: Concurrency and Introduction
 
@@ -6519,6 +7924,8 @@ This ensures that `put()` and `get()` are protected.
 - A **critical section** is code that accesses shared resources and must execute atomically
 - Even simple operations like `counter++` compile to multiple instructions; interrupts between instructions cause race conditions
 - **Mutual exclusion** is needed to ensure only one thread executes the critical section at a time
+
+<!-- TOC --><a name="chapter-28-locks-1"></a>
 
 ### Chapter 28: Locks
 
@@ -6529,6 +7936,8 @@ This ensures that `put()` and `get()` are protected.
 - **Ticket locks** ensure FIFO fairness; modern systems use more sophisticated mechanisms (futexes, condition variables)
 - **Lock contention** and overhead must be minimized; lock only the critical section, not surrounding code
 
+<!-- TOC --><a name="chapter-29-lock-based-concurrent-data-structures-1"></a>
+
 ### Chapter 29: Lock-Based Concurrent Data Structures
 
 - **Coarse-grained locking** (one lock for the entire data structure) is simple but limits concurrency
@@ -6536,6 +7945,8 @@ This ensures that `put()` and `get()` are protected.
 - **Hash tables** with per-bucket locks scale far better than single-locked lists
 - **Allocate memory outside the lock** to minimize time spent holding it
 - **Never forget to unlock** — use proper control flow (single exit points) to avoid bugs
+
+<!-- TOC --><a name="chapter-30-condition-variables-1"></a>
 
 ### Chapter 30: Condition Variables
 
@@ -6546,6 +7957,8 @@ This ensures that `put()` and `get()` are protected.
 - Multiple condition variables enable clearer code (one per distinct condition/result)
 - Must hold a lock when calling wait/signal/broadcast
 
+<!-- TOC --><a name="chapter-31-semaphores-1"></a>
+
 ### Chapter 31: Semaphores
 
 - A **semaphore** is an atomic counter with `wait()` (decrement and sleep if ≤ 0) and `post()` (increment and wake)
@@ -6555,6 +7968,8 @@ This ensures that `put()` and `get()` are protected.
 - Semaphores are powerful but lower-level; condition variables + mutexes are often clearer
 
 ---
+
+<!-- TOC --><a name="important-terms-7"></a>
 
 ## Important Terms
 
@@ -6586,7 +8001,11 @@ This ensures that `put()` and `get()` are protected.
 
 ---
 
+<!-- TOC --><a name="ascii-diagrams-visual-reference"></a>
+
 ## ASCII Diagrams: Visual Reference
+
+<!-- TOC --><a name="thread-interleaving-and-context-switches"></a>
 
 ### Thread Interleaving and Context Switches
 
@@ -6604,6 +8023,8 @@ Kernel:    Context-switch events indicated above
 Note: Only one thread has CPU at any moment. OS decides scheduling.
 ```
 
+<!-- TOC --><a name="race-condition-counter-example"></a>
+
 ### Race Condition: Counter Example
 
 ```
@@ -6620,6 +8041,8 @@ Thread 1 Execution:          Thread 2 Execution:
 
 Final: counter = 51 ❌ (should be 52)
 ```
+
+<!-- TOC --><a name="thread-states-and-transitions"></a>
 
 ### Thread States and Transitions
 
@@ -6663,6 +8086,8 @@ Final: counter = 51 ❌ (should be 52)
         BLOCKED → READY
 ```
 
+<!-- TOC --><a name="lock-acquisition-and-release"></a>
+
 ### Lock Acquisition and Release
 
 ```
@@ -6697,6 +8122,8 @@ TIME    Thread A              Lock State       Thread B
 
   7     ...                   FREE            Returns
 ```
+
+<!-- TOC --><a name="condition-variable-synchronization"></a>
 
 ### Condition Variable Synchronization
 
@@ -6737,6 +8164,8 @@ Time  Producer              Buffer        Consumer
   ...continues...
 ```
 
+<!-- TOC --><a name="semaphore-state-binary-lock-n1"></a>
+
 ### Semaphore State: Binary Lock (N=1)
 
 ```
@@ -6761,6 +8190,8 @@ Returns
                                        Increments: 0 → 1
 ```
 
+<!-- TOC --><a name="semaphore-state-ordering-n0"></a>
+
 ### Semaphore State: Ordering (N=0)
 
 ```
@@ -6781,6 +8212,8 @@ Returns
                                              Returns
                                              (do child work)
 ```
+
+<!-- TOC --><a name="lock-contention-and-scaling"></a>
 
 ### Lock Contention and Scaling
 
@@ -6808,6 +8241,8 @@ due to contention.
 
 ---
 
+<!-- TOC --><a name="summary-and-study-recommendations"></a>
+
 ## Summary and Study Recommendations
 
 This study guide covers the fundamental synchronization primitives and patterns for concurrent programming:
@@ -6828,11 +8263,15 @@ This study guide covers the fundamental synchronization primitives and patterns 
 
 8. **Test and Measure** — Concurrency bugs manifest under load. Use tools like helgrind (valgrind) to detect races, and always measure performance — intuition about concurrency is often wrong.
 
+<!-- TOC --><a name="io-storage-persistence-comprehensive-os-study-guide"></a>
+
 # I/O, Storage & Persistence: Comprehensive OS Study Guide
 
 **Operating Systems: Three Easy Pieces (OSTEP) - Chapters 35-45**
 
 ---
+
+<!-- TOC --><a name="table-of-contents-2"></a>
 
 ## Table of Contents
 
@@ -6848,13 +8287,21 @@ This study guide covers the fundamental synchronization primitives and patterns 
 
 ---
 
+<!-- TOC --><a name="chapter-36-io-devices"></a>
+
 ## Chapter 36: I/O Devices
+
+<!-- TOC --><a name="overview-5"></a>
 
 ### Overview
 
 I/O devices are the bridge between the CPU/memory system and the outside world. The core challenge is managing the vastly different speeds between fast processors and slow peripherals (disks, networks, etc.).
 
+<!-- TOC --><a name="system-architecture"></a>
+
 ### System Architecture
+
+<!-- TOC --><a name="io-bus-hierarchy"></a>
 
 #### I/O Bus Hierarchy
 
@@ -6885,7 +8332,11 @@ The typical system uses a hierarchical bus structure:
 - **General I/O bus** (e.g., PCI): Connects graphics, SCSI controllers, etc.
 - **Peripheral buses** (USB, SATA, SCSI): Connect actual devices
 
+<!-- TOC --><a name="io-communication-methods"></a>
+
 ### I/O Communication Methods
+
+<!-- TOC --><a name="1-polling"></a>
 
 #### 1. Polling
 
@@ -6901,6 +8352,8 @@ data = data_reg;
 
 **Advantages**: Simple to implement  
 **Disadvantages**: Wastes CPU cycles; poor for slow devices
+
+<!-- TOC --><a name="2-interrupt-driven-io"></a>
 
 #### 2. Interrupt-Driven I/O
 
@@ -6918,6 +8371,8 @@ handle_interrupt() {
 
 **Advantages**: CPU can multitask while waiting  
 **Disadvantages**: More complex; interrupt overhead for fast devices
+
+<!-- TOC --><a name="3-direct-memory-access-dma"></a>
 
 #### 3. Direct Memory Access (DMA)
 
@@ -6944,11 +8399,15 @@ dma_controller.start();
 **Advantages**: Frees CPU from data movement; excellent for large transfers  
 **Disadvantages**: More complex hardware; memory bus contention
 
+<!-- TOC --><a name="performance-trade-offs"></a>
+
 #### Performance Trade-offs
 
 - **High-speed devices** (fast networks): Polling may be better to avoid interrupt overhead
 - **Slow devices** (disk): Interrupts essential to avoid wasting CPU
 - **Bulk transfers** (disk to memory): DMA is ideal
+
+<!-- TOC --><a name="example-xv6-ide-driver-disk-interface"></a>
 
 ### Example: xv6 IDE Driver (Disk Interface)
 
@@ -7038,9 +8497,15 @@ void ide_intr(void) {
 
 ---
 
+<!-- TOC --><a name="chapter-37-hard-disk-drives"></a>
+
 ## Chapter 37: Hard Disk Drives
 
+<!-- TOC --><a name="disk-mechanics"></a>
+
 ### Disk Mechanics
+
+<!-- TOC --><a name="physical-structure"></a>
 
 #### Physical Structure
 
@@ -7064,6 +8529,8 @@ void ide_intr(void) {
 - **Cylinders**: Tracks at same radius across different surfaces
 - **Disk Arm & Head**: Actuator that positions head to read/write
 
+<!-- TOC --><a name="disk-address-mapping"></a>
+
 #### Disk Address Mapping
 
 Data is addressed via **Logical Block Addressing (LBA)**:
@@ -7083,7 +8550,11 @@ C  H  S (Cylinder, Head, Sector)
 1  0  0 → LBA (sectors per track × heads)
 ```
 
+<!-- TOC --><a name="disk-performance-model"></a>
+
 ### Disk Performance Model
+
+<!-- TOC --><a name="io-time-formula"></a>
 
 #### I/O Time Formula
 
@@ -7109,6 +8580,8 @@ $$T_{I/O} = T_{seek} + T_{rotation} + T_{transfer}$$
    - For 512-byte sector at 100 MB/s: ~0.005 ms (negligible)
    - For 4 MB at 100 MB/s: ~0.04 ms
 
+<!-- TOC --><a name="example-calculation"></a>
+
 #### Example Calculation
 
 ```
@@ -7123,9 +8596,13 @@ T_I/O ≈ 3 + 4.17 + 0.005 ≈ 7.2 ms total
 
 **Key Insight**: Mechanical delays dominate; data transfer is nearly free!
 
+<!-- TOC --><a name="disk-scheduling-algorithms"></a>
+
 ### Disk Scheduling Algorithms
 
 The order in which the disk services requests significantly affects performance. Seek and rotation times are minimized by smart scheduling.
+
+<!-- TOC --><a name="1-shortest-seek-time-first-sstf"></a>
 
 #### 1. Shortest-Seek-Time-First (SSTF)
 
@@ -7177,6 +8654,8 @@ SSTF chooses 51 instead of 0
 0 keeps starving!
 ```
 
+<!-- TOC --><a name="2-scan-elevator-algorithm"></a>
+
 #### 2. SCAN ("Elevator Algorithm")
 
 Sweep across the disk like an elevator: move from one end to the other, servicing requests along the way.
@@ -7207,6 +8686,8 @@ Total distance: 2 + 2 + 5 + 2 + 13 = 24 (same as SSTF in this case)
 - Requests at far end may wait while nearer requests served multiple times
 - Can cause "biased" service (near/far ends treated unequally)
 
+<!-- TOC --><a name="3-c-scan-circular-scan"></a>
+
 #### 3. C-SCAN (Circular SCAN)
 
 Like SCAN but only sweep in one direction; when reaching end, return to start without servicing requests.
@@ -7228,6 +8709,8 @@ Total seek distance: 24
 - More uniform wait times than SCAN
 - Prevents "clustering" of requests at far end
 
+<!-- TOC --><a name="4-sptf-shortest-positioning-time-first"></a>
+
 #### 4. SPTF (Shortest-Positioning-Time-First)
 
 Choose request with smallest $T_{seek} + T_{rotation}$ (not just seek time).
@@ -7242,6 +8725,8 @@ Choose request with smallest $T_{seek} + T_{rotation}$ (not just seek time).
 - Requires knowing disk rotational position (modern disks hide this)
 - Rarely implemented on real disks
 
+<!-- TOC --><a name="comparison-table"></a>
+
 ### Comparison Table
 
 | Algorithm | Fairness  | Performance | Starvation          |
@@ -7250,6 +8735,8 @@ Choose request with smallest $T_{seek} + T_{rotation}$ (not just seek time).
 | SCAN      | Good      | Good        | No                  |
 | C-SCAN    | Excellent | Good        | No                  |
 | SPTF      | Moderate  | Best        | Yes                 |
+
+<!-- TOC --><a name="write-buffering-caching"></a>
 
 ### Write Buffering & Caching
 
@@ -7263,7 +8750,11 @@ Modern disks include:
 
 ---
 
+<!-- TOC --><a name="chapter-38-raid"></a>
+
 ## Chapter 38: RAID
+
+<!-- TOC --><a name="motivation"></a>
 
 ### Motivation
 
@@ -7275,7 +8766,11 @@ A single disk has limited:
 
 **RAID** (Redundant Array of Inexpensive/Independent Disks) addresses these through parallelism and redundancy.
 
+<!-- TOC --><a name="raid-levels"></a>
+
 ### RAID Levels
+
+<!-- TOC --><a name="raid-0-striping-no-redundancy"></a>
 
 #### RAID-0: Striping (No Redundancy)
 
@@ -7310,6 +8805,8 @@ Layout:
 - **Reliability worse than single disk**: MTBF = (single MTBF) / N
 
 **When to use**: Temporary storage, caches, non-critical data
+
+<!-- TOC --><a name="raid-1-mirroring"></a>
 
 #### RAID-1: Mirroring
 
@@ -7354,6 +8851,8 @@ Layout:
 - **Random writes**: 1× throughput
 
 **When to use**: Critical data, database systems, high-reliability requirement
+
+<!-- TOC --><a name="raid-4-block-level-striping-with-dedicated-parity"></a>
 
 #### RAID-4: Block-Level Striping with Dedicated Parity
 
@@ -7433,6 +8932,8 @@ A small write requires:
 | Random read      | ~1   | One disk                    |
 | Random write     | ~4   | 2 reads + 2 writes (parity) |
 
+<!-- TOC --><a name="raid-5-distributed-parity"></a>
+
 #### RAID-5: Distributed Parity
 
 Like RAID-4, but parity is distributed across all disks (no dedicated parity disk).
@@ -7474,6 +8975,8 @@ Stripe 2:
 - Random read: ~1 disk
 - Random write: still ~4 I/Os (2 reads, 2 writes)
 
+<!-- TOC --><a name="raid-comparison-table"></a>
+
 ### RAID Comparison Table
 
 | Metric           | RAID-0 | RAID-1  | RAID-4/5 |
@@ -7487,6 +8990,8 @@ Stripe 2:
 | Rand. write IOPS | N×I    | N×I/2   | I/4      |
 | Cost/reliability | Poor   | High    | Good     |
 
+<!-- TOC --><a name="when-to-use-each"></a>
+
 ### When to Use Each
 
 - **RAID-0**: Temporary data, caching, performance-critical non-critical
@@ -7496,7 +9001,11 @@ Stripe 2:
 
 ---
 
+<!-- TOC --><a name="chapter-39-files-and-directories"></a>
+
 ## Chapter 39: Files and Directories
+
+<!-- TOC --><a name="file-abstraction"></a>
 
 ### File Abstraction
 
@@ -7506,7 +9015,11 @@ A file is a linear array of bytes, typically stored on persistent media (disk). 
 - Read from and write to files
 - Query file metadata
 
+<!-- TOC --><a name="file-system-calls"></a>
+
 ### File System Calls
+
+<!-- TOC --><a name="opening-a-file"></a>
 
 #### Opening a File
 
@@ -7549,6 +9062,8 @@ int fd = open("data.txt", O_RDONLY);
 int fd = open("log.txt", O_WRONLY | O_APPEND);
 ```
 
+<!-- TOC --><a name="reading-from-a-file"></a>
+
 #### Reading from a File
 
 ```c
@@ -7578,6 +9093,8 @@ if (nread > 0) {
 }
 ```
 
+<!-- TOC --><a name="writing-to-a-file"></a>
+
 #### Writing to a File
 
 ```c
@@ -7591,6 +9108,8 @@ ssize_t n = write(int fd, const void *buffer, size_t count);
 3. Return number of bytes written
 
 **Important**: Short writes possible if disk full or buffer full.
+
+<!-- TOC --><a name="seeking-within-a-file"></a>
 
 #### Seeking Within a File
 
@@ -7623,6 +9142,8 @@ lseek(fd, 1000000, SEEK_SET);
 write(fd, "data", 4);  // Gap of 1MB filled with zeros
 ```
 
+<!-- TOC --><a name="forcing-durability"></a>
+
 #### Forcing Durability
 
 ```c
@@ -7648,9 +9169,13 @@ fsync(fd);  // Wait for disk write
 // Now safe if system crashes
 ```
 
+<!-- TOC --><a name="directory-operations"></a>
+
 ### Directory Operations
 
 A directory is a special file containing (name, inode_number) mappings.
+
+<!-- TOC --><a name="listing-directory-contents"></a>
 
 #### Listing Directory Contents
 
@@ -7677,6 +9202,8 @@ struct dirent {
 };
 ```
 
+<!-- TOC --><a name="creating-directories"></a>
+
 #### Creating Directories
 
 ```c
@@ -7684,6 +9211,8 @@ int mkdir(const char *path, mode_t mode);
 ```
 
 **Creates** new directory with specified mode.
+
+<!-- TOC --><a name="directory-listing-example"></a>
 
 #### Directory Listing Example
 
@@ -7711,6 +9240,8 @@ void list_dir(const char *path) {
     closedir(dir);
 }
 ```
+
+<!-- TOC --><a name="file-metadata-stat"></a>
 
 ### File Metadata: Stat
 
@@ -7780,7 +9311,11 @@ if (sb.st_mode & S_IRUSR) {
 }
 ```
 
+<!-- TOC --><a name="hard-links-and-symbolic-links"></a>
+
 ### Hard Links and Symbolic Links
+
+<!-- TOC --><a name="hard-links"></a>
 
 #### Hard Links
 
@@ -7819,6 +9354,8 @@ Inode 42 now has link count = 2
 unlink(filename);  // Decrements link count
 ```
 
+<!-- TOC --><a name="symbolic-links-soft-links"></a>
+
 #### Symbolic Links (Soft Links)
 
 Symbolic link is a special file containing a pathname.
@@ -7855,6 +9392,8 @@ When you access "link1":
 - Broken if target deleted
 - Takes up inode even if target is directory
 
+<!-- TOC --><a name="comparison"></a>
+
 #### Comparison
 
 | Feature                   | Hard Link          | Symlink            |
@@ -7864,6 +9403,8 @@ When you access "link1":
 | Can link directories?     | No                 | Yes                |
 | Extra indirection?        | No                 | Yes                |
 | Broken if target deleted? | No (name survives) | Yes                |
+
+<!-- TOC --><a name="path-name-resolution"></a>
 
 ### Path Name Resolution
 
@@ -7886,11 +9427,17 @@ When opening `/home/user/file.txt`:
 
 ---
 
+<!-- TOC --><a name="chapter-40-file-system-implementation"></a>
+
 ## Chapter 40: File System Implementation
+
+<!-- TOC --><a name="vsfs-very-simple-file-system"></a>
 
 ### VSFS: Very Simple File System
 
 A simplified file system design to illustrate concepts used in real systems (ext2, ext3, etc.).
+
+<!-- TOC --><a name="on-disk-layout"></a>
 
 ### On-Disk Layout
 
@@ -7910,6 +9457,8 @@ Examples:
 - Inode table (blocks 3-7): Array of inode structures
 - Data region (blocks 8-63): User data
 ```
+
+<!-- TOC --><a name="inode-structure"></a>
 
 ### Inode Structure
 
@@ -7933,9 +9482,13 @@ struct inode {
 };
 ```
 
+<!-- TOC --><a name="multi-level-index-block-pointers"></a>
+
 ### Multi-Level Index: Block Pointers
 
 To support large files with reasonable inode size, use indirect blocks.
+
+<!-- TOC --><a name="direct-blocks"></a>
 
 #### Direct Blocks
 
@@ -7949,6 +9502,8 @@ Block 1 at LBA 101: bytes 4096-8191
 ...
 Block 11 at LBA 111: bytes 45056-49151
 ```
+
+<!-- TOC --><a name="indirect-blocks"></a>
 
 #### Indirect Blocks
 
@@ -7964,6 +9519,8 @@ LBA 500 (indirect block):
 This adds: 1024 × 4 KB = 4 MB more capacity
 Total file size: 48 KB + 4 MB ≈ 4 MB
 ```
+
+<!-- TOC --><a name="double-indirect-blocks"></a>
 
 #### Double-Indirect Blocks
 
@@ -7983,6 +9540,8 @@ Each entry points to an indirect block:
 Total capacity: 1024 × 4 MB = 4 GB
 ```
 
+<!-- TOC --><a name="triple-indirect-blocks"></a>
+
 #### Triple-Indirect Blocks
 
 For file > 4 GB:
@@ -7994,6 +9553,8 @@ Triple-indirect → Double-indirect → Indirect → Data
 
 Total capacity: 1024 × 4 GB = 4 TB
 ```
+
+<!-- TOC --><a name="example-multi-level-index-calculation"></a>
 
 ### Example: Multi-Level Index Calculation
 
@@ -8029,6 +9590,8 @@ indirect_block = read_block(in->i_indirect + indirect_index);
 lba = indirect_block[pointer_index];  // LBA of block 5000
 read_block(lba);
 ```
+
+<!-- TOC --><a name="directory-organization"></a>
 
 ### Directory Organization
 
@@ -8069,7 +9632,11 @@ struct dirent {
 };
 ```
 
+<!-- TOC --><a name="free-space-management"></a>
+
 ### Free Space Management
+
+<!-- TOC --><a name="bitmaps"></a>
 
 #### Bitmaps
 
@@ -8097,7 +9664,11 @@ Disadvantages:
 Optimization: Keep track of "first free block", start scanning there
 ```
 
+<!-- TOC --><a name="file-system-access-paths"></a>
+
 ### File System Access Paths
+
+<!-- TOC --><a name="reading-a-file-foobar-3-blocks"></a>
 
 #### Reading a File: `/foo/bar` (3 blocks)
 
@@ -8136,6 +9707,8 @@ Total I/Os: 5 (open) + 3 (read) = 8 I/Os
 
 **With caching**: Inodes and directories cached in memory, major optimization
 
+<!-- TOC --><a name="writing-a-file-creating-foobar"></a>
+
 #### Writing a File (Creating `/foo/bar`)
 
 ```
@@ -8167,9 +9740,13 @@ Total: ~10 I/Os for a single small file creation!
 MASSIVELY EXPENSIVE compared to simple operations.
 ```
 
+<!-- TOC --><a name="caching-and-buffering"></a>
+
 ### Caching and Buffering
 
 Modern file systems use aggressive caching:
+
+<!-- TOC --><a name="unified-page-cache"></a>
 
 #### Unified Page Cache
 
@@ -8210,6 +9787,8 @@ With unified cache:
 └─────────────────────────────────┘
 ```
 
+<!-- TOC --><a name="write-buffering"></a>
+
 #### Write Buffering
 
 The file system doesn't write immediately:
@@ -8242,7 +9821,11 @@ fsync(fd);  // Force to disk immediately
 
 ---
 
+<!-- TOC --><a name="chapter-41-locality-and-the-fast-file-system"></a>
+
 ## Chapter 41: Locality and the Fast File System
+
+<!-- TOC --><a name="the-problem-fragmentation-in-old-unix-fs"></a>
 
 ### The Problem: Fragmentation in Old UNIX FS
 
@@ -8273,11 +9856,15 @@ File E is fragmented!
 Sequential read: seek after reading E2, then seek after C reading C2
 ```
 
+<!-- TOC --><a name="solution-ffs-fast-file-system"></a>
+
 ### Solution: FFS (Fast File System)
 
 Key insight: **File systems must be disk-aware**
 
 Organize file system to minimize seeks and respect disk geometry.
+
+<!-- TOC --><a name="cylinder-groups"></a>
 
 ### Cylinder Groups
 
@@ -8319,9 +9906,13 @@ FFS grouping:
 └─────────────────┴──────────────────┴──────────────────┘
 ```
 
+<!-- TOC --><a name="ffs-allocation-policies"></a>
+
 ### FFS Allocation Policies
 
 **Philosophy**: Keep related stuff together; separate unrelated.
+
+<!-- TOC --><a name="directory-allocation"></a>
 
 #### Directory Allocation
 
@@ -8332,6 +9923,8 @@ When creating a new directory:
 3. Allocate directory inode and data in that group
 
 **Rationale**: Spread directories to balance load; group files with their directory.
+
+<!-- TOC --><a name="file-allocation"></a>
 
 #### File Allocation
 
@@ -8345,6 +9938,8 @@ When creating a new file:
 - Parent directory frequently accessed with files
 - Nearby blocks minimize seek distance
 - Preserve directory locality
+
+<!-- TOC --><a name="example-layout"></a>
 
 #### Example Layout
 
@@ -8366,6 +9961,8 @@ Result: Accessing /a/file1 requires minimal seeking
         All /a data close together
         /b data isolated from /a
 ```
+
+<!-- TOC --><a name="handling-large-files"></a>
 
 ### Handling Large Files
 
@@ -8424,6 +10021,8 @@ Conclusion: Allocate 9 MB per chunk to achieve 90% of peak bandwidth
             (spend 10 ms seeking, 90 ms transferring, ratio 1:9)
 ```
 
+<!-- TOC --><a name="disk-layout-optimization"></a>
+
 ### Disk Layout Optimization
 
 Modern disks with track buffering handle this automatically, but historically FFS used **parameterization**:
@@ -8449,7 +10048,11 @@ Result: Can read consecutive logical blocks without extra rotations
 Modern disks: Internal track buffer makes this unnecessary
 ```
 
+<!-- TOC --><a name="ffs-features"></a>
+
 ### FFS Features
+
+<!-- TOC --><a name="sub-block-allocation"></a>
 
 #### Sub-block Allocation
 
@@ -8469,6 +10072,8 @@ Optimization: libc buffers writes, avoids fragmentation
 Result: Small files use appropriate size; no massive waste
 ```
 
+<!-- TOC --><a name="features-for-usability"></a>
+
 #### Features for Usability
 
 FFS introduced:
@@ -8476,6 +10081,8 @@ FFS introduced:
 - **Long filenames**: Up to 255 characters (vs. 14 byte limit)
 - **Symbolic links**: Can point to directories and cross filesystems
 - **Atomic rename**: `rename()` operation for safe file replacement
+
+<!-- TOC --><a name="ffs-measurements"></a>
 
 ### FFS Measurements
 
@@ -8493,11 +10100,17 @@ Conclusion: FFS's locality assumptions well founded!
 
 ---
 
+<!-- TOC --><a name="chapter-42-crash-consistency-journaling"></a>
+
 ## Chapter 42: Crash Consistency & Journaling
+
+<!-- TOC --><a name="the-crash-consistency-problem"></a>
 
 ### The Crash Consistency Problem
 
 When system crashes mid-update, file system can be left inconsistent.
+
+<!-- TOC --><a name="example-appending-to-file"></a>
 
 ### Example: Appending to File
 
@@ -8530,9 +10143,13 @@ Modifications needed:
 3. D_b:   Write new data block
 ```
 
+<!-- TOC --><a name="crash-scenarios"></a>
+
 ### Crash Scenarios
 
 If system crashes after only 1-2 of 3 writes complete:
+
+<!-- TOC --><a name="case-1-only-d_b-written"></a>
 
 #### Case 1: Only D_b written
 
@@ -8540,6 +10157,8 @@ If system crashes after only 1-2 of 3 writes complete:
 Disk state: Inode still points to block 4, bitmap says 4 is allocated
 Result: No corruption, append lost (acceptable)
 ```
+
+<!-- TOC --><a name="case-2-only-iv2-written"></a>
 
 #### Case 2: Only I[v2] written
 
@@ -8549,6 +10168,8 @@ Result: INCONSISTENT! Inode-bitmap mismatch!
         Reading file may get garbage from block 5
 ```
 
+<!-- TOC --><a name="case-3-only-bv2-written"></a>
+
 #### Case 3: Only B[v2] written
 
 ```
@@ -8556,6 +10177,8 @@ Disk state: Bitmap says block 5 allocated, no inode points to it
 Result: INCONSISTENT! Space leak - block 5 never reused
         (in lost+found or lost forever)
 ```
+
+<!-- TOC --><a name="case-4-iv2-and-bv2-written-not-d_b"></a>
 
 #### Case 4: I[v2] and B[v2] written, not D_b
 
@@ -8565,9 +10188,13 @@ Result: Consistent metadata, but user gets garbage data!
         (subtle corruption)
 ```
 
+<!-- TOC --><a name="solution-1-fsck-file-system-checker"></a>
+
 ### Solution 1: fsck (File System Checker)
 
 Scan entire disk and repair inconsistencies:
+
+<!-- TOC --><a name="fsck-phases"></a>
 
 #### FSCK Phases
 
@@ -8578,6 +10205,8 @@ Scan entire disk and repair inconsistencies:
 5. **Duplicate Pointers**: Find inodes pointing to same block
 6. **Bad Pointers**: Remove pointers outside valid range
 7. **Directory Checks**: Verify directory structure
+
+<!-- TOC --><a name="example-fsck-recovery"></a>
 
 #### Example FSCK Recovery
 
@@ -8598,17 +10227,23 @@ Result: Consistent state, but:
    - Can't distinguish "what operation was in progress?"
 ```
 
+<!-- TOC --><a name="fsck-problems"></a>
+
 #### FSCK Problems
 
 - **Slow**: Must scan entire disk (can take hours on modern disks)
 - **O(disk_size)**: Recovery time scales with disk capacity
 - **Limited repair capability**: Can't recover garbage data
 
+<!-- TOC --><a name="solution-2-journaling-write-ahead-logging"></a>
+
 ### Solution 2: Journaling (Write-Ahead Logging)
 
 Before modifying on-disk structures, write log entry describing update.
 
 If crash, replay log entries to finish or discard incomplete operation.
+
+<!-- TOC --><a name="basic-protocol"></a>
 
 #### Basic Protocol
 
@@ -8629,6 +10264,8 @@ I[v2] → Block 2
 B[v2] → Block 1
 D_b → Block 5
 ```
+
+<!-- TOC --><a name="why-order-matters"></a>
 
 #### Why Order Matters
 
@@ -8660,6 +10297,8 @@ Recovery:
 - If TxE missing: Transaction incomplete, skip it
 ```
 
+<!-- TOC --><a name="data-journaling-example"></a>
+
 #### Data Journaling Example
 
 ```
@@ -8686,6 +10325,8 @@ Timeline:
   - Recovery replays transactions from journal
   - Checkpoint writes them to final location
   - Effective recovery: O(log_size) instead of O(disk_size)
+
+<!-- TOC --><a name="metadata-journaling-ordered-journaling"></a>
 
 #### Metadata Journaling (Ordered Journaling)
 
@@ -8714,6 +10355,8 @@ Reason: If inode checkpointed first, it points to D_b that might not exist
 
 Result: Inode always points to valid data (already on disk)
 ```
+
+<!-- TOC --><a name="transaction-batching"></a>
 
 #### Transaction Batching
 
@@ -8747,6 +10390,8 @@ Benefits:
 - Much faster (similar to write buffering)
 ```
 
+<!-- TOC --><a name="journal-circular-buffer"></a>
+
 #### Journal Circular Buffer
 
 Journal is finite size; must reuse space after checkpoint:
@@ -8762,6 +10407,8 @@ After checkpointing TxA:
     ↑
     Space freed, can reuse for new transactions
 ```
+
+<!-- TOC --><a name="special-case-block-reuse"></a>
 
 #### Special Case: Block Reuse
 
@@ -8805,7 +10452,11 @@ On recovery:
 
 ---
 
+<!-- TOC --><a name="chapter-43-log-structured-file-systems"></a>
+
 ## Chapter 43: Log-Structured File Systems
+
+<!-- TOC --><a name="motivation-1"></a>
 
 ### Motivation
 
@@ -8826,6 +10477,8 @@ Result: ~6-10 disk I/Os for single file creation
 
 **Key insight**: All writes should be sequential to one location!
 
+<!-- TOC --><a name="lfs-log-structured-file-system-approach"></a>
+
 ### LFS (Log-Structured File System) Approach
 
 Buffer all updates in memory; write as single sequential batch to disk:
@@ -8843,6 +10496,8 @@ Result:
 - No seeks
 - Efficiency: ~90-95% of peak bandwidth!
 ```
+
+<!-- TOC --><a name="structure-segments"></a>
 
 ### Structure: Segments
 
@@ -8868,6 +10523,8 @@ Segment (e.g., 1 MB):
 │ └─ (inode_7 → new_disk_address)               │
 └───────────────────────────────────────────────┘
 ```
+
+<!-- TOC --><a name="solution-inode-map-indirection"></a>
 
 ### Solution: Inode Map (Indirection)
 
@@ -8896,6 +10553,8 @@ To read inode 5:
 - Inode can move anywhere on disk
 - Update inode location by updating imap
 - One indirection layer isolates inode movement
+
+<!-- TOC --><a name="checkpoint-region"></a>
 
 ### Checkpoint Region
 
@@ -8936,6 +10595,8 @@ Finding files:
 
 If crash between copies, use most recent CR with valid timestamps.
 
+<!-- TOC --><a name="reading-file-from-disk"></a>
+
 ### Reading File from Disk
 
 **Step 1**: Boot/mount
@@ -8968,6 +10629,8 @@ Read data block from disk
 Like normal filesystem (imap cached, so same performance)
 ```
 
+<!-- TOC --><a name="the-garbage-collection-problem"></a>
+
 ### The Garbage Collection Problem
 
 LFS never overwrites in place - just writes new versions:
@@ -8985,6 +10648,8 @@ LBA 2000-2001: New data + inode (live)
 Over time, disk fills with garbage (old copies of files).
 
 **Solution**: Garbage collection
+
+<!-- TOC --><a name="block-liveness-determination"></a>
 
 #### Block Liveness Determination
 
@@ -9018,6 +10683,8 @@ if (version == inode.version && inode.block_pointers[offset] == A) {
 }
 ```
 
+<!-- TOC --><a name="cleaning-policy"></a>
+
 #### Cleaning Policy
 
 **When to clean**:
@@ -9034,6 +10701,8 @@ if (version == inode.version && inode.block_pointers[offset] == A) {
   - Best policy: Clean sooner (garbage won't increase)
 
 LFS uses heuristic to segregate hot vs. cold segments and clean accordingly.
+
+<!-- TOC --><a name="cleaning-example"></a>
 
 #### Cleaning Example
 
@@ -9058,6 +10727,8 @@ Segment 0: FREE (can be reused!)
 Result: Space reclaimed from garbage, enables new writes
 ```
 
+<!-- TOC --><a name="crash-recovery"></a>
+
 ### Crash Recovery
 
 LFS maintains log of segments:
@@ -9080,7 +10751,11 @@ Checkpoint Region → Latest segment head/tail
 
 ---
 
+<!-- TOC --><a name="chapter-44-flash-based-ssds"></a>
+
 ## Chapter 44: Flash-Based SSDs
+
+<!-- TOC --><a name="flash-storage-technology"></a>
 
 ### Flash Storage Technology
 
@@ -9102,6 +10777,8 @@ MLC (Multi-Level Cell):
 TLC (Triple-Level Cell):
   8 charge levels → 3 bits per cell
 ```
+
+<!-- TOC --><a name="flash-organization"></a>
 
 ### Flash Organization
 
@@ -9127,7 +10804,11 @@ Example: 4 blocks, 4 pages per block:
 └──┴──┴──┴──┴─┴──┴──┴──┴──┴─┴──┴──┴──┴──┴─┴──┴──┴──┴──┴─┘
 ```
 
+<!-- TOC --><a name="flash-operations"></a>
+
 ### Flash Operations
+
+<!-- TOC --><a name="read-page"></a>
 
 #### Read Page
 
@@ -9139,6 +10820,8 @@ Advantage: Same speed regardless of location (no mechanical delay!)
           Random access instead of sequential disk
 ```
 
+<!-- TOC --><a name="erase-block"></a>
+
 #### Erase Block
 
 ```
@@ -9149,6 +10832,8 @@ Effect: Erases entire block, making all pages programmable
 Important: Must copy live data elsewhere before erasing!
 ```
 
+<!-- TOC --><a name="program-page"></a>
+
 #### Program Page
 
 ```
@@ -9158,6 +10843,8 @@ Performance: ~200-1350 µs
 Requirement: Block must be erased first
              Page state must be ERASED (not VALID)
 ```
+
+<!-- TOC --><a name="flash-state-transitions"></a>
 
 ### Flash State Transitions
 
@@ -9172,6 +10859,8 @@ ERASED → program_page() → VALID
 ```
 
 **Key insight**: To write to a page, entire block must be erased!
+
+<!-- TOC --><a name="write-amplification"></a>
 
 ### Write Amplification
 
@@ -9202,6 +10891,8 @@ Write amplification = Total bytes written to flash
 - Reduces throughput
 - Wastes bandwidth
 
+<!-- TOC --><a name="flash-translation-layer-ftl"></a>
+
 ### Flash Translation Layer (FTL)
 
 Hardware controller that:
@@ -9227,6 +10918,8 @@ read_flash(physical_page)
 erase_flash(block)
 program_flash(physical_page)
 ```
+
+<!-- TOC --><a name="wear-leveling"></a>
 
 ### Wear Leveling
 
@@ -9257,6 +10950,8 @@ Dynamic wear leveling:
 - Prevent any block from aging faster
 ```
 
+<!-- TOC --><a name="garbage-collection"></a>
+
 ### Garbage Collection
 
 Flash GC is similar to LFS GC:
@@ -9280,6 +10975,8 @@ Tradeoff:
 - Cost: Erasing (slow) + rewrites (wear amplification)
 - Policy: Collect when utilization low, idle time, etc.
 ```
+
+<!-- TOC --><a name="ssd-performance-characteristics"></a>
 
 ### SSD Performance Characteristics
 
@@ -9306,7 +11003,11 @@ Sequential read ~3 MB/s     ~100 MB/s (similar)
 
 ---
 
+<!-- TOC --><a name="chapter-45-data-integrity-and-protection"></a>
+
 ## Chapter 45: Data Integrity and Protection
+
+<!-- TOC --><a name="data-corruption-sources"></a>
 
 ### Data Corruption Sources
 
@@ -9333,9 +11034,13 @@ Examples:
 - Directory corruption: Wrong file accessed or file deleted unexpectedly
 ```
 
+<!-- TOC --><a name="detection-checksums"></a>
+
 ### Detection: Checksums
 
 Add redundancy to detect corruption:
+
+<!-- TOC --><a name="checksum-algorithm"></a>
 
 #### Checksum Algorithm
 
@@ -9375,6 +11080,8 @@ if (expected != block.checksum) {
 }
 ```
 
+<!-- TOC --><a name="crc-cyclic-redundancy-check"></a>
+
 #### CRC (Cyclic Redundancy Check)
 
 More powerful than XOR:
@@ -9396,9 +11103,13 @@ G(x) = x^32 + x^26 + x^23 + x^22 + x^16 + x^12 + x^11 + x^10
 - CRC more expensive to compute
 - For most purposes, CRC-32 used (4 bytes, fast)
 
+<!-- TOC --><a name="recovery-redundancy"></a>
+
 ### Recovery: Redundancy
 
 If corruption detected, recovery mechanisms:
+
+<!-- TOC --><a name="replication"></a>
 
 #### Replication
 
@@ -9422,6 +11133,8 @@ If Disk 1 block corrupted:
 
 **Cost**: 2× space (100% overhead)
 
+<!-- TOC --><a name="parity"></a>
+
 #### Parity
 
 Store checksum across multiple blocks (like RAID-4/5):
@@ -9442,6 +11155,8 @@ Example: 4 blocks + 1 parity = 20% overhead (vs. 100% for replication)
 
 - Replication: Fast recovery, high cost
 - Parity: Slower recovery, lower cost
+
+<!-- TOC --><a name="example-whole-disk-checksums"></a>
 
 ### Example: Whole-Disk Checksums
 
@@ -9474,6 +11189,8 @@ Level 3: End-to-end checksum
 └─────────────────────────────────┘
 ```
 
+<!-- TOC --><a name="silent-data-corruption-challenges"></a>
+
 ### Silent Data Corruption Challenges
 
 Even with checksums, challenges remain:
@@ -9501,7 +11218,11 @@ Solution: Backup strategy + redundancy
 
 ---
 
+<!-- TOC --><a name="key-takeaways-by-topic"></a>
+
 ## Key Takeaways by Topic
+
+<!-- TOC --><a name="io-system-design"></a>
 
 ### I/O System Design
 
@@ -9509,11 +11230,15 @@ Solution: Backup strategy + redundancy
 - **I/O methods**: Polling (simple, wasteful), interrupts (efficient), DMA (best for bulk data)
 - **Device drivers**: Handle low-level communication, interrupt handlers, data buffering
 
+<!-- TOC --><a name="disk-performance"></a>
+
 ### Disk Performance
 
 - **Seek + rotation dominate**: Data transfer negligible (7 ms seek + 4 ms rotation vs. 0.005 ms transfer)
 - **Scheduling matters**: SCAN/C-SCAN prevent starvation better than SSTF
 - **Large sequential > small random**: 100× throughput difference
+
+<!-- TOC --><a name="raid"></a>
 
 ### RAID
 
@@ -9522,11 +11247,15 @@ Solution: Backup strategy + redundancy
 - **RAID-5**: Balance (N-1 capacity, 1 failure tolerance) but write penalty
 - **Small-write problem**: Random write → 4 disk I/Os (2 reads for parity + 2 writes)
 
+<!-- TOC --><a name="file-systems"></a>
+
 ### File Systems
 
 - **Inodes**: Metadata about files (size, permissions, block pointers)
 - **Multi-level index**: Direct pointers (48 KB) + indirect (4 MB) + double-indirect (4 GB)
 - **Path resolution**: Multiple I/Os per open (cache critical for performance)
+
+<!-- TOC --><a name="ffs-locality"></a>
 
 ### FFS & Locality
 
@@ -9534,17 +11263,23 @@ Solution: Backup strategy + redundancy
 - **Locality principle**: Files in same directory accessed together
 - **Large files exception**: Spread blocks across groups to avoid consuming entire group
 
+<!-- TOC --><a name="crash-consistency"></a>
+
 ### Crash Consistency
 
 - **Problem**: Partial updates leave system inconsistent
 - **Journaling solution**: Write-ahead logging prevents inconsistency
 - **Trade-off**: Journaling has overhead but guarantees consistency
 
+<!-- TOC --><a name="lfs-log-structured-fs"></a>
+
 ### LFS (Log-Structured FS)
 
 - **Key insight**: Make all writes sequential (high bandwidth)
 - **Inode map**: Indirection layer to avoid seeking for file inodes
 - **Garbage collection**: Reclaim space from overwritten blocks
+
+<!-- TOC --><a name="flash-ssds"></a>
 
 ### Flash SSDs
 
@@ -9553,6 +11288,8 @@ Solution: Backup strategy + redundancy
 - **FTL**: Manages translation, wear leveling, garbage collection
 - **Wear leveling**: Distribute erases to prevent premature failure
 
+<!-- TOC --><a name="data-protection"></a>
+
 ### Data Protection
 
 - **Checksums**: Detect corruption
@@ -9560,6 +11297,8 @@ Solution: Backup strategy + redundancy
 - **Trade-off**: 100% overhead for replication vs. ~20% for parity
 
 ---
+
+<!-- TOC --><a name="terminology-reference"></a>
 
 ## Terminology Reference
 
@@ -9588,19 +11327,29 @@ Solution: Backup strategy + redundancy
 
 This comprehensive guide synthesizes chapters 35-45 of OSTEP, focusing on I/O, Storage, and Persistence mechanisms. Each section builds understanding from device-level operations (I/O, disk scheduling) through system-level abstraction (file systems, RAID) to advanced techniques (journaling, LFS, flash management). The emphasis is on understanding tradeoffs and seeing how each mechanism addresses fundamental challenges: performance (sequential vs. random I/O), reliability (redundancy, checksums), and consistency (journaling, copy-on-write).
 
+<!-- TOC --><a name="distributed-systems-networking-comprehensive-study-guide"></a>
+
 # Distributed Systems & Networking: Comprehensive Study Guide
 
 This guide synthesizes the core concepts from operating systems distributed computing, covering fundamental networking principles, reliable message passing, Remote Procedure Calls (RPC), and two pioneering distributed file system architectures: NFS and AFS.
 
 ---
 
+<!-- TOC --><a name="chapter-48-distributed-systems-foundations"></a>
+
 ## Chapter 48: Distributed Systems Foundations
+
+<!-- TOC --><a name="introduction-to-distributed-systems"></a>
 
 ### Introduction to Distributed Systems
 
 A **distributed system** is a collection of independent computers connected by a network that appear to act as a single coherent system. The fundamental challenge in designing distributed systems is **handling failure**, which becomes inevitable when you scale beyond a single machine. In a data center with thousands of machines, failure is not an exception—it is the norm.
 
+<!-- TOC --><a name="481-packet-loss-and-network-unreliability"></a>
+
 ### 48.1 Packet Loss and Network Unreliability
+
+<!-- TOC --><a name="understanding-packet-loss"></a>
 
 #### Understanding Packet Loss
 
@@ -9613,6 +11362,8 @@ Networks are fundamentally unreliable. Packets flowing across routers and networ
 3. **Physical Link Failures**: Transient electromagnetic noise or timing issues can corrupt packets, causing the receiving hardware to discard them.
 
 **Key Principle**: Packet loss is fundamental in networking—you must design systems assuming some percentage of messages will not arrive at their destination.
+
+<!-- TOC --><a name="checksums-for-data-integrity"></a>
 
 #### Checksums for Data Integrity
 
@@ -9651,9 +11402,13 @@ XOR each column:
 
 Process: Compute checksum → Send message + checksum → Receiver computes checksum → Compare: if match, likely uncorrupted.
 
+<!-- TOC --><a name="482-unreliable-communication-udp"></a>
+
 ### 48.2 Unreliable Communication: UDP
 
 The User Datagram Protocol (UDP) is an example of an unreliable communication layer built into modern networking stacks (UDP/IP).
+
+<!-- TOC --><a name="udp-socket-basics"></a>
 
 #### UDP Socket Basics
 
@@ -9688,6 +11443,8 @@ int UDP_Open(int port) {
 - Binds the socket to a specific port so the OS knows to route incoming packets on that port to this process
 - Returns a socket descriptor (integer) for use in subsequent operations
 
+<!-- TOC --><a name="address-resolution"></a>
+
 #### Address Resolution
 
 ```c
@@ -9713,6 +11470,8 @@ int UDP_FillSockAddr(struct sockaddr_in *addr,
 - Takes a hostname (e.g., "cs.wisc.edu") and looks up its IP address via DNS
 - Returns the resolved address in a format the OS can use for routing
 
+<!-- TOC --><a name="sending-and-receiving-data"></a>
+
 #### Sending and Receiving Data
 
 ```c
@@ -9737,6 +11496,8 @@ int UDP_Read(int sd, struct sockaddr_in *addr,
 - `sendto()`: Sends data to a specific address (connectionless)
 - `recvfrom()`: Receives data and returns sender's address
 - Both return number of bytes sent/received, or -1 on error
+
+<!-- TOC --><a name="complete-client-server-example"></a>
 
 #### Complete Client-Server Example
 
@@ -9790,9 +11551,13 @@ int main(int argc, char *argv[]) {
 
 **Important**: UDP is unordered, unreliable, and may drop packets. Some packets may be lost in transit or at endpoints.
 
+<!-- TOC --><a name="483-reliable-communication-timeout-retry-and-sequence-numbers"></a>
+
 ### 48.3 Reliable Communication: Timeout, Retry, and Sequence Numbers
 
 To build reliability on top of unreliable UDP, we need three mechanisms:
+
+<!-- TOC --><a name="mechanism-1-acknowledgments"></a>
 
 #### Mechanism 1: Acknowledgments
 
@@ -9809,6 +11574,8 @@ Sender                      Receiver
 ```
 
 **How it works**: After sending a message, the sender waits for an acknowledgment. When the receiver gets a message, it sends a short "ack" message confirming receipt.
+
+<!-- TOC --><a name="mechanism-2-timeout-and-retry"></a>
 
 #### Mechanism 2: Timeout and Retry
 
@@ -9839,6 +11606,8 @@ Sender                          Receiver
 - Timer expires if no ack received within that window
 - Timer interrupt handler re-sends message from saved copy
 - Successfully received ack cancels timer
+
+<!-- TOC --><a name="mechanism-3-sequence-numbers-to-prevent-duplicates"></a>
 
 #### Mechanism 3: Sequence Numbers to Prevent Duplicates
 
@@ -9900,6 +11669,8 @@ receive(message, ID=2):
 
 **Result**: If ack for message N is lost and sender retries, receiver recognizes duplicate by sequence number and acks without re-processing.
 
+<!-- TOC --><a name="tcp-the-standard-reliable-layer"></a>
+
 #### TCP: The Standard Reliable Layer
 
 TCP/IP combines all these mechanisms plus additional sophistication:
@@ -9912,9 +11683,13 @@ TCP/IP combines all these mechanisms plus additional sophistication:
 
 **Design Decision**: Many RPC systems use UDP + custom reliability rather than TCP to avoid redundant ack messages. TCP reliability + application retry = waste.
 
+<!-- TOC --><a name="484-communication-abstractions-beyond-raw-messaging"></a>
+
 ### 48.4 Communication Abstractions: Beyond Raw Messaging
 
 Early distributed systems researchers explored two abstractions:
+
+<!-- TOC --><a name="distributed-shared-memory-dsm"></a>
 
 #### Distributed Shared Memory (DSM)
 
@@ -9945,9 +11720,13 @@ read(page 0x5000)         [Local?]  ────────> [Fetch from B]
 
 **Verdict**: DSM was researched extensively but never achieved practical success. Modern systems do not use DSM.
 
+<!-- TOC --><a name="485-remote-procedure-call-rpc"></a>
+
 ### 48.5 Remote Procedure Call (RPC)
 
 **Concept**: Make calling a function on a remote machine look like calling a local function.
+
+<!-- TOC --><a name="the-rpc-abstraction"></a>
 
 #### The RPC Abstraction
 
@@ -9969,6 +11748,8 @@ RPC system hides:
 - Routing results back
 - Unpacking results at caller
 
+<!-- TOC --><a name="rpc-architecture-two-main-components"></a>
+
 #### RPC Architecture: Two Main Components
 
 **1. Stub Generator (Protocol Compiler)**
@@ -9986,6 +11767,8 @@ Generator produces:
 
 - **Client stub**: For each function, code to marshal args, send message, wait for reply, unmarshal results
 - **Server stub**: For each function, code to unmarshal request, call actual function, marshal results, send reply
+
+<!-- TOC --><a name="client-side-stub-operations"></a>
 
 #### Client-Side Stub Operations
 
@@ -10016,6 +11799,8 @@ For a client RPC call like `result = func1(42)`:
    - Caller sees result as if function returned locally
 ```
 
+<!-- TOC --><a name="server-side-stub-operations"></a>
+
 #### Server-Side Stub Operations
 
 When server receives RPC request for `func1(42)`:
@@ -10038,6 +11823,8 @@ When server receives RPC request for `func1(42)`:
    - Network system delivers response
 ```
 
+<!-- TOC --><a name="complex-arguments-challenge"></a>
+
 #### Complex Arguments Challenge
 
 **Problem**: What if function takes a pointer to a buffer?
@@ -10059,6 +11846,8 @@ interface {
     int write(int fd, buffer<char> buf, int count);
 };
 ```
+
+<!-- TOC --><a name="server-concurrency-thread-pool"></a>
 
 #### Server Concurrency: Thread Pool
 
@@ -10095,6 +11884,8 @@ Worker Threads (pool of N threads):
 
 **Tradeoff**: Increased programming complexity—workers must use locks if accessing shared state.
 
+<!-- TOC --><a name="rpc-runtime-library-issues"></a>
+
 #### RPC Runtime Library Issues
 
 **Problem 1: Service Discovery**
@@ -10106,6 +11897,8 @@ How does client know where server is?
 - Hard-coded hostname + port: `rpc_connect("server.example.com", 8080)`
 - Look up in registry: DNS or special naming service
 - Broadcast: Send "does anyone provide service X?" message
+
+<!-- TOC --><a name="problem-2-transport-protocol-choice"></a>
 
 #### Problem 2: Transport Protocol Choice
 
@@ -10122,6 +11915,8 @@ How does client know where server is?
 - Pros: Single acknowledgment layer, faster
 - Cons: Must implement reliability in RPC layer (timeout/retry)
 - Most RPC systems choose this path
+
+<!-- TOC --><a name="endianness-handling"></a>
 
 #### Endianness Handling
 
@@ -10149,6 +11944,8 @@ receive_message {
 }
 ```
 
+<!-- TOC --><a name="asynchronous-rpc"></a>
+
 #### Asynchronous RPC
 
 Standard RPC is synchronous (caller blocks):
@@ -10168,6 +11965,8 @@ result2 = wait_for(id2);        // Block on second result
 ```
 
 **Benefit**: Network used more efficiently—multiple requests in flight simultaneously.
+
+<!-- TOC --><a name="long-running-remote-calls"></a>
 
 #### Long-Running Remote Calls
 
@@ -10193,6 +11992,8 @@ Sender's timer fires before response!
 // If receiver keeps saying "yes", sender keeps waiting
 ```
 
+<!-- TOC --><a name="large-message-fragmentation"></a>
+
 #### Large Message Fragmentation
 
 Network protocols limit packet size. If RPC message exceeds limit:
@@ -10208,9 +12009,13 @@ Network protocols limit packet size. If RPC message exceeds limit:
 - If network layer doesn't support it, RPC library must
 - Send data in chunks, reconstruct at receiver
 
+<!-- TOC --><a name="486-the-end-to-end-argument"></a>
+
 ### 48.6 The End-to-End Argument
 
 **Core Idea**: Certain guarantees can only be enforced at application level, not lower layers.
+
+<!-- TOC --><a name="example-reliable-file-transfer"></a>
 
 #### Example: Reliable File Transfer
 
@@ -10260,11 +12065,17 @@ if (computed == received_checksum) {
 
 ---
 
+<!-- TOC --><a name="chapter-49-suns-network-file-system-nfs"></a>
+
 ## Chapter 49: Sun's Network File System (NFS)
+
+<!-- TOC --><a name="491-introduction-to-distributed-file-systems"></a>
 
 ### 49.1 Introduction to Distributed File Systems
 
 A **distributed file system** allows multiple client machines to access files stored on centralized server(s) across a network. Unlike local file systems (files on same machine), the client-server architecture introduces network latency and new failure modes.
+
+<!-- TOC --><a name="architecture"></a>
 
 #### Architecture
 
@@ -10286,6 +12097,8 @@ A **distributed file system** allows multiple client machines to access files st
                  └─────────────┘
 ```
 
+<!-- TOC --><a name="benefits-vs-local-file-systems"></a>
+
 #### Benefits vs. Local File Systems
 
 | Aspect         | Local FS                    | Distributed FS                |
@@ -10295,6 +12108,8 @@ A **distributed file system** allows multiple client machines to access files st
 | Backup         | Backup each machine         | Backup one server             |
 | Availability   | Files gone if machine fails | Files available if servers up |
 | Performance    | Fast (direct disk)          | Slower (network latency)      |
+
+<!-- TOC --><a name="client-server-components"></a>
 
 #### Client-Server Components
 
@@ -10310,6 +12125,8 @@ A **distributed file system** allows multiple client machines to access files st
 - Accesses disk storage
 - Returns data/metadata in response
 
+<!-- TOC --><a name="492-nfs-protocol-design-philosophy"></a>
+
 ### 49.2 NFS Protocol Design Philosophy
 
 **Goal**: Simple and fast server crash recovery.
@@ -10318,7 +12135,11 @@ A **distributed file system** allows multiple client machines to access files st
 
 **Key insight**: The stateless protocol design is revolutionary.
 
+<!-- TOC --><a name="493-stateless-vs-stateful-protocols"></a>
+
 ### 49.3 Stateless vs. Stateful Protocols
+
+<!-- TOC --><a name="stateful-protocol-problems"></a>
 
 #### Stateful Protocol: Problems
 
@@ -10365,6 +12186,8 @@ Timeline of Server Crash
 ```
 
 Server must detect client crash and clean up. How? Timeout? How long?
+
+<!-- TOC --><a name="stateless-protocol-nfs-solution"></a>
 
 #### Stateless Protocol: NFS Solution
 
@@ -10413,6 +12236,8 @@ receive NFS_READ(handle=(1,1234,5), offset=0, count=MAX) {
 2. **Network loses request**: Client timer fires, simply retry with same handle. Server does exact same operation—idempotent!
 3. **Client crashes**: Server doesn't care. If client reboots, it'll eventually timeout and retry. Server unaware.
 
+<!-- TOC --><a name="494-file-handles-in-nfs"></a>
+
 ### 49.4 File Handles in NFS
 
 A file handle uniquely identifies a file so client can reference it without server tracking any state.
@@ -10429,6 +12254,8 @@ File Handle Structure:
 Total: 80 bits worth of information
 ```
 
+<!-- TOC --><a name="why-each-component"></a>
+
 #### Why Each Component?
 
 **Volume ID**: NFS servers can export multiple file systems. Volume ID tells server which one.
@@ -10436,6 +12263,8 @@ Total: 80 bits worth of information
 **Inode Number**: Identifies file within that volume. Combined with inode in-memory structure, server can quickly locate data.
 
 **Generation Number**: When inode is deleted, its number might get reused for a new file later. If client has stale handle with (vol=1, ino=500, gen=3) but server deleted that file and reused ino=500 for new file with gen=4, the generation counter prevents this confusion.
+
+<!-- TOC --><a name="495-nfsv2-protocol-operations"></a>
 
 ### 49.5 NFSv2 Protocol Operations
 
@@ -10451,6 +12280,8 @@ Total: 80 bits worth of information
 | MKDIR       | Directory FH + dirname + attributes  | Directory FH + attributes                    | Create directory        |
 | RMDIR       | Directory FH + dirname               | —                                            | Delete directory        |
 | READDIR     | Directory FH + count + cookie        | Directory entries + new cookie               | List directory contents |
+
+<!-- TOC --><a name="example-reading-a-file"></a>
 
 #### Example: Reading a File
 
@@ -10486,7 +12317,11 @@ close(fd=3):
      (Stateless: server doesn't care)
 ```
 
+<!-- TOC --><a name="496-handling-server-failure-idempotency"></a>
+
 ### 49.6 Handling Server Failure: Idempotency
+
+<!-- TOC --><a name="the-problem-1"></a>
 
 #### The Problem
 
@@ -10511,6 +12346,8 @@ Client ──────[request]──────> Server
 
 In all three cases, client retries. **The same request might be received multiple times!**
 
+<!-- TOC --><a name="idempotency-the-solution"></a>
+
 #### Idempotency: The Solution
 
 **Idempotent operation**: Effect of doing it N times = effect of doing it once.
@@ -10528,6 +12365,8 @@ Example NOT idempotent:
 increment(counter);     // Not idempotent: counter++, counter++ produces different result
                         // than just counter++
 ```
+
+<!-- TOC --><a name="nfs-idempotent-operations"></a>
 
 #### NFS Idempotent Operations
 
@@ -10557,6 +12396,8 @@ WRITE(file_handle, offset=512, count=512, data=[...])
 
 **Why READ/WRITE idempotent**: WRITE specifies exact bytes at exact offset. Even replayed, same outcome. READ just fetches data—no side effects.
 
+<!-- TOC --><a name="non-idempotent-operations-mkdir"></a>
+
 #### Non-Idempotent Operations: mkdir
 
 ```c
@@ -10585,9 +12426,13 @@ MKDIR(dir_handle, "newfolder")
 
 **Voltaire's Law**: Perfect is the enemy of good. Don't demand 100% correctness if practical solution handles 99.99%.
 
+<!-- TOC --><a name="497-client-side-caching"></a>
+
 ### 49.7 Client-Side Caching
 
 Goal: Reduce network traffic and improve performance.
+
+<!-- TOC --><a name="basic-idea"></a>
 
 #### Basic Idea
 
@@ -10598,6 +12443,8 @@ First read from /foo:
 Subsequent reads from /foo:
    Local cache has copy → No network needed → Fast
 ```
+
+<!-- TOC --><a name="write-buffering-decoupling-latency-from-performance"></a>
 
 #### Write Buffering: Decoupling Latency from Performance
 
@@ -10612,7 +12459,11 @@ close(fd);                 // Forces buffered data to server
 
 **Benefit**: Application's `write()` call returns immediately. Server writes happen asynchronously. Decouples app latency from actual disk performance.
 
+<!-- TOC --><a name="498-the-cache-consistency-problem"></a>
+
 ### 49.8 The Cache Consistency Problem
+
+<!-- TOC --><a name="problem-scenario"></a>
 
 #### Problem Scenario
 
@@ -10652,6 +12503,8 @@ If C1 reads F, it uses stale cached copy F[v1]
 C2 sees latest, C1 sees old
 ```
 
+<!-- TOC --><a name="solution-1-flush-on-close-close-to-open-consistency"></a>
+
 #### Solution 1: Flush-on-Close (Close-to-Open Consistency)
 
 **Rule**: When client closes a file it wrote to, force all buffered writes to server.
@@ -10669,6 +12522,8 @@ read(fd2, buf, ...) // Gets latest version because writes were flushed
 ```
 
 **Guarantee**: When file is opened, you see latest version that was closed.
+
+<!-- TOC --><a name="solution-2-attribute-cache-to-reduce-getattr-traffic"></a>
 
 #### Solution 2: Attribute Cache to Reduce GETATTR Traffic
 
@@ -10712,6 +12567,8 @@ read(fd) at 3:45:24:
 
 **Tradeoff**: For 3 seconds, changes from other clients might not be visible. But massively reduces GETATTR load on server.
 
+<!-- TOC --><a name="499-server-side-write-buffering"></a>
+
 ### 49.9 Server-Side Write Buffering
 
 **Critical constraint**: NFS servers MUST NOT return success on WRITE until data is on stable storage (disk).
@@ -10749,6 +12606,8 @@ Solution: Server MUST fsync before returning success.
 1. **Battery-backed write cache**: Writes go to RAM backed by battery. Data protected even if power lost.
 2. **Log-structured layout**: Optimize disk writes for sequential access, much faster than random.
 
+<!-- TOC --><a name="4910-summary-key-nfs-design-insights"></a>
+
 ### 49.10 Summary: Key NFS Design Insights
 
 | Design Choice       | Rationale                                     | Tradeoff                          |
@@ -10760,12 +12619,16 @@ Solution: Server MUST fsync before returning success.
 | Flush-on-Close      | Ensures visible updates across clients        | Temporary inconsistency possible  |
 | Sync Writes to Disk | Prevents corruption if server crashes         | Slower performance                |
 
+<!-- TOC --><a name="key-takeaways-8"></a>
+
 #### Key Takeaways
 
 - **Statelessness** is the foundation of crash recovery
 - **Idempotency** enables replay without fear of duplication
 - **Caching** required for performance but adds inconsistency challenges
 - **Simplicity and pragmatism** beat perfection; handle 99% of cases well
+
+<!-- TOC --><a name="important-terms-8"></a>
 
 #### Important Terms
 
@@ -10780,7 +12643,11 @@ Solution: Server MUST fsync before returning success.
 
 ---
 
+<!-- TOC --><a name="chapter-50-the-andrew-file-system-afs"></a>
+
 ## Chapter 50: The Andrew File System (AFS)
+
+<!-- TOC --><a name="501-design-goal-scalability"></a>
 
 ### 50.1 Design Goal: Scalability
 
@@ -10792,7 +12659,11 @@ Solution: Server MUST fsync before returning success.
 
 **Key insight**: Protocol design fundamentally limits scalability. NFS forces too many client-server interactions.
 
+<!-- TOC --><a name="502-afsv1-whole-file-caching"></a>
+
 ### 50.2 AFSv1: Whole-File Caching
+
+<!-- TOC --><a name="design-principle-whole-file-caching-on-local-disk"></a>
 
 #### Design Principle: Whole-File Caching on Local Disk
 
@@ -10817,6 +12688,8 @@ close():
   [If modified, send entire file back to server]
 ```
 
+<!-- TOC --><a name="file-operations"></a>
+
 #### File Operations
 
 ```c
@@ -10839,6 +12712,8 @@ receive file_content {
 }
 ```
 
+<!-- TOC --><a name="protocol-operations"></a>
+
 #### Protocol Operations
 
 | Operation   | Arguments               | Action                           |
@@ -10849,6 +12724,8 @@ receive file_content {
 | Store       | Pathname, file contents | Store entire file                |
 | SetFileStat | File, attributes        | Set metadata                     |
 | ListDir     | Directory               | List contents                    |
+
+<!-- TOC --><a name="problems-identified"></a>
 
 #### Problems Identified
 
@@ -10885,9 +12762,13 @@ Worse: most of the time, NOBODY else accessed the file.
 
 **Scalability Result**: Only ~20 clients per server. Not an improvement over NFS.
 
+<!-- TOC --><a name="503-afsv2-callbacks-and-file-identifiers"></a>
+
 ### 50.3 AFSv2: Callbacks and File Identifiers
 
 To scale better, redesign protocol to minimize server interactions.
+
+<!-- TOC --><a name="key-innovation-1-callbacks"></a>
 
 #### Key Innovation 1: Callbacks
 
@@ -10917,6 +12798,8 @@ Client: [Invalidates file X from cache]
 ```
 
 When file changes, server proactively notifies client (like interrupt vs. polling).
+
+<!-- TOC --><a name="key-innovation-2-file-identifiers-fid"></a>
 
 #### Key Innovation 2: File Identifiers (FID)
 
@@ -10959,6 +12842,8 @@ AFSv2:
 ```
 
 **Result**: With directory caching + callbacks, subsequent accesses are entirely local!
+
+<!-- TOC --><a name="complete-file-access-timeline"></a>
 
 #### Complete File Access Timeline
 
@@ -11027,9 +12912,13 @@ return fd
 No network communication needed!
 ```
 
+<!-- TOC --><a name="504-cache-consistency-in-afsv2"></a>
+
 ### 50.4 Cache Consistency in AFSv2
 
 AFS consistency model is simpler and more intuitive than NFS.
+
+<!-- TOC --><a name="between-machine-consistency"></a>
 
 #### Between-Machine Consistency
 
@@ -11058,6 +12947,8 @@ close(F)  ────────────→ [Server invalidates callbacks]
 
 **Pattern**: Last closer wins. Whichever client closes last, its version is what persists.
 
+<!-- TOC --><a name="within-machine-consistency"></a>
+
 #### Within-Machine Consistency
 
 Exception: Processes on same machine see writes immediately (like local filesystem).
@@ -11081,9 +12972,13 @@ close(F)
   [Flush to server, break callbacks]
 ```
 
+<!-- TOC --><a name="505-crash-recovery-in-afsv2"></a>
+
 ### 50.5 Crash Recovery in AFSv2
 
 More complex than NFS because of server state (callbacks).
+
+<!-- TOC --><a name="client-crash-recovery"></a>
 
 #### Client Crash Recovery
 
@@ -11103,6 +12998,8 @@ Client1 (after reboot):
   Server: "No, get fresh version"
   Client: Fetch new version, reestablish callback
 ```
+
+<!-- TOC --><a name="server-crash-recovery"></a>
 
 #### Server Crash Recovery
 
@@ -11125,6 +13022,8 @@ Solution: Server must tell all clients "I crashed, don't trust your cache"
   - Or clients detect via heartbeat timeout and invalidate cache
   - Or client re-learns callback state on next access (TestAuth)
 ```
+
+<!-- TOC --><a name="506-performance-comparison-afs-vs-nfs"></a>
 
 ### 50.6 Performance Comparison: AFS vs. NFS
 
@@ -11172,11 +13071,15 @@ AFS:  2·NL · Lnet  (fetch entire large file, write entire large file)
 Ratio: 2·NL  (AFS MUCH slower)
 ```
 
+<!-- TOC --><a name="key-observations"></a>
+
 #### Key Observations
 
 1. **AFS better for**: Files accessed sequentially, re-read case, repeated accesses to same file
 2. **AFS worse for**: Random access within large files, small writes to large files
 3. **Depends on workload**: Which type of file access dominates in your environment?
+
+<!-- TOC --><a name="507-afs-additional-features"></a>
 
 ### 50.7 AFS Additional Features
 
@@ -11188,6 +13091,8 @@ Beyond protocol design, AFS added features that NFS lacked:
 | Security         | Basic (easily spoofed)              | Advanced (Kerberos integration) | Prevent unauthorized access |
 | Access Control   | Standard UNIX permissions           | Access Control Lists            | Fine-grained sharing        |
 | Administration   | Per-machine                         | Centralized                     | Easier management           |
+
+<!-- TOC --><a name="508-summary-nfs-vs-afs"></a>
 
 ### 50.8 Summary: NFS vs. AFS
 
@@ -11201,6 +13106,8 @@ Beyond protocol design, AFS added features that NFS lacked:
 | **Crash Recovery** | Simple (stateless)                 | Complex (callbacks lost)               |
 | **Performance**    | Good for random access             | Good for sequential access             |
 
+<!-- TOC --><a name="key-takeaways-9"></a>
+
 #### Key Takeaways
 
 - **Callbacks** transform polling into interrupt-driven model
@@ -11208,6 +13115,8 @@ Beyond protocol design, AFS added features that NFS lacked:
 - **File identifiers** reduce pathname traversal overhead
 - **Workload matters**: Protocol should match common access patterns
 - **Measured approach** (Patterson's Law): Measure prototype, identify bottlenecks, fix them
+
+<!-- TOC --><a name="important-terms-9"></a>
 
 #### Important Terms
 
@@ -11222,6 +13131,8 @@ Beyond protocol design, AFS added features that NFS lacked:
 
 ---
 
+<!-- TOC --><a name="chapter-51-dialogue-summary-on-distributed-systems"></a>
+
 ## Chapter 51: Dialogue Summary on Distributed Systems
 
 This chapter is primarily narrative dialogue between professor and student. Key lessons recap:
@@ -11234,7 +13145,11 @@ This chapter is primarily narrative dialogue between professor and student. Key 
 
 ---
 
+<!-- TOC --><a name="synthesis-key-principles-across-all-chapters"></a>
+
 ## Synthesis: Key Principles Across All Chapters
+
+<!-- TOC --><a name="principle-1-the-end-to-end-argument"></a>
 
 ### Principle 1: The End-to-End Argument
 
@@ -11242,13 +13157,19 @@ Lower layers provide mechanisms, but applications must verify correctness end-to
 
 Example network checksum vs. application-level file transfer checksum—need both.
 
+<!-- TOC --><a name="principle-2-statelessness-enables-simplicity"></a>
+
 ### Principle 2: Statelessness Enables Simplicity
 
 NFS's stateless design recovers from server crash without complex handshake. Trade-off: longer messages containing all needed info.
 
+<!-- TOC --><a name="principle-3-idempotency-enables-replay"></a>
+
 ### Principle 3: Idempotency Enables Replay
 
 NFS WRITE operations are idempotent (same operation N times = same result). Enables simple retry mechanism for handling failure.
+
+<!-- TOC --><a name="principle-4-protocol-design-affects-scalability"></a>
 
 ### Principle 4: Protocol Design Affects Scalability
 
@@ -11257,15 +13178,21 @@ AFS: 50+ clients by adding callbacks and file IDs and reducing TestAuth.
 
 The protocol determines how many clients a server scales to.
 
+<!-- TOC --><a name="principle-5-caching-improves-performance-but-adds-complexity"></a>
+
 ### Principle 5: Caching Improves Performance but Adds Complexity
 
 Client-side caching reduces network traffic but introduces cache consistency challenges (stale cache, update visibility). Must design protocol carefully (flush-on-close, callbacks, etc.).
+
+<!-- TOC --><a name="principle-6-measurement-drives-design"></a>
 
 ### Principle 6: Measurement Drives Design
 
 AFS designers measured bottlenecks, identified pathname traversal and TestAuth flood as problems, and fixed them proactively.
 
 ---
+
+<!-- TOC --><a name="reference-protocol-comparison-table"></a>
 
 ## Reference: Protocol Comparison Table
 
@@ -11279,6 +13206,8 @@ AFS designers measured bottlenecks, identified pathname traversal and TestAuth f
 | **AFSv2**        | UDP + callback-based     | Server crash (complex), packet loss, client crash | Strong (close-to-open)    | 50+ clients     | Complex (callbacks gone) |
 
 ---
+
+<!-- TOC --><a name="glossary-of-key-terms"></a>
 
 ## Glossary of Key Terms
 
